@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SectorLISP Friendly — Playground</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ── Reset & base ─────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:          #F7F6F2;
+    --surface:     #FFFFFF;
+    --surface-2:   #F2F1ED;
+    --border:      #E4E2DB;
+    --border-2:    #D1CFC6;
+    --text:        #1C1B18;
+    --text-2:      #6B6860;
+    --text-3:      #9B9A96;
+    --accent:      #2B5CE6;
+    --accent-dim:  #EEF2FD;
+    --accent-text: #1A3FA0;
+    --danger:      #C0392B;
+    --success:     #166534;
+    --mono:        'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    --sans:        'DM Sans', system-ui, sans-serif;
+    --radius:      6px;
+    --radius-lg:   10px;
+  }
+
+  html, body {
+    height: 100%;
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Layout ───────────────────────────────────────────────── */
+  .page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ───────────────────────────────────────────────── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+
+  .header-title {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .header-title h1 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+
+  .badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    background: var(--accent-dim);
+    color: var(--accent-text);
+    border: 1px solid #C7D7F8;
+    padding: 2px 7px;
+    border-radius: 99px;
+    text-transform: uppercase;
+  }
+
+  .header-meta {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--text-3);
+  }
+
+  .header-meta a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .header-meta a:hover { text-decoration: underline; }
+
+  /* ── Main workspace ───────────────────────────────────────── */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 24px 24px;
+    gap: 12px;
+    max-width: 1280px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  /* ── Panels row ───────────────────────────────────────────── */
+  .panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    min-height: 0;
+  }
+
+  .panel {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 14px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .panel-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-2);
+  }
+
+  .panel-hint {
+    font-size: 11px;
+    color: var(--text-3);
+    font-family: var(--mono);
+  }
+
+  /* ── Editor ───────────────────────────────────────────────── */
+  #editor {
+    flex: 1;
+    width: 100%;
+    min-height: 340px;
+    padding: 16px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--text);
+    background: var(--surface);
+    border: none;
+    resize: vertical;
+    outline: none;
+    letter-spacing: 0.01em;
+    tab-size: 2;
+  }
+
+  #editor:focus {
+    background: #FDFCF9;
+  }
+
+  /* ── Output ───────────────────────────────────────────────── */
+  #output {
+    flex: 1;
+    min-height: 340px;
+    padding: 16px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--text);
+    background: var(--surface);
+    white-space: pre-wrap;
+    word-break: break-all;
+    overflow-y: auto;
+    letter-spacing: 0.01em;
+  }
+
+  #output:empty::before {
+    content: 'Results will appear here...';
+    color: var(--text-3);
+    font-style: italic;
+    font-family: var(--sans);
+    font-size: 13px;
+  }
+
+  .out-result {
+    color: var(--text);
+  }
+
+  .out-error {
+    color: var(--danger);
+  }
+
+  .out-trace-call {
+    color: var(--text-2);
+  }
+
+  .out-trace-ret {
+    color: var(--success);
+  }
+
+  /* ── Controls row ─────────────────────────────────────────── */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .controls-sep {
+    width: 1px;
+    height: 22px;
+    background: var(--border);
+    margin: 0 2px;
+  }
+
+  /* ── Buttons ──────────────────────────────────────────────── */
+  button {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: var(--radius);
+    cursor: pointer;
+    border: 1px solid transparent;
+    padding: 6px 14px;
+    line-height: 1;
+    transition: background 0.1s, border-color 0.1s, color 0.1s;
+    white-space: nowrap;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .btn-primary:hover { background: #1E4CD4; border-color: #1E4CD4; }
+  .btn-primary:active { background: #1940B8; }
+
+  .btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border-color: var(--border-2);
+  }
+  .btn-secondary:hover { background: var(--surface-2); border-color: var(--border-2); }
+  .btn-secondary:active { background: var(--border); }
+
+  .btn-secondary.active {
+    background: var(--accent-dim);
+    color: var(--accent-text);
+    border-color: #C7D7F8;
+  }
+
+  .btn-danger {
+    background: var(--surface);
+    color: var(--danger);
+    border-color: var(--border-2);
+  }
+  .btn-danger:hover { background: #FEF2F2; border-color: #FECACA; }
+
+  /* ── Dropdown ─────────────────────────────────────────────── */
+  .dropdown {
+    position: relative;
+  }
+
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
+    min-width: 280px;
+    z-index: 100;
+    overflow: hidden;
+  }
+
+  .dropdown-menu.open { display: block; }
+
+  .dropdown-section {
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .dropdown-section:last-child { border-bottom: none; }
+
+  .dropdown-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    padding: 4px 14px 2px;
+  }
+
+  .dropdown-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 7px 14px;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: background 0.08s;
+  }
+  .dropdown-item:hover { background: var(--surface-2); }
+
+  .dropdown-item-sub {
+    font-size: 11px;
+    color: var(--text-3);
+    display: block;
+    margin-top: 1px;
+  }
+
+  /* ── Stats bar ────────────────────────────────────────────── */
+  .stats {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0;
+    overflow: hidden;
+    flex-wrap: wrap;
+  }
+
+  .stat-group {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 8px 14px;
+    border-right: 1px solid var(--border);
+  }
+  .stat-group:last-child { border-right: none; }
+
+  .stat {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    padding: 0 8px;
+  }
+  .stat:first-child { padding-left: 0; }
+  .stat:last-child { padding-right: 0; }
+
+  .stat + .stat {
+    border-left: 1px solid var(--border);
+  }
+
+  .stat-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-3);
+    letter-spacing: 0.02em;
+  }
+
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    min-width: 32px;
+  }
+
+  /* ── Toast ────────────────────────────────────────────────── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--text);
+    color: #fff;
+    font-size: 13px;
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    z-index: 200;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── Responsive ───────────────────────────────────────────── */
+  @media (max-width: 800px) {
+    main { padding: 12px; }
+    .panels { grid-template-columns: 1fr; }
+    #editor, #output { min-height: 220px; }
+    .stat-group { padding: 7px 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div class="header-title">
+    <h1>SectorLISP</h1>
+    <span class="badge">Friendly Branch</span>
+  </div>
+  <div class="header-meta">
+    436 bytes &mdash;
+    <a href="https://justine.lol/sectorlisp2/" target="_blank" rel="noopener">justine.lol/sectorlisp2</a>
+    &nbsp;&middot;&nbsp; ISC License &copy; Justine Tunney
+  </div>
+</header>
+
+<main>
+
+  <div class="panels">
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-label">Input</span>
+        <span class="panel-hint">uppercased automatically</span>
+      </div>
+      <textarea id="editor" spellcheck="false" autocorrect="off" autocapitalize="off"
+>(DEFINE FF .
+  (LAMBDA (X)
+    (COND ((ATOM X) X)
+          ((QUOTE T) (FF (CAR X))))))
+
+(FF (QUOTE ((A) B C)))</textarea>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-label">Output</span>
+        <span id="output-hint" class="panel-hint"></span>
+      </div>
+      <pre id="output"></pre>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn-primary" id="btn-eval" onclick="OnEval()">Eval</button>
+    <button class="btn-secondary" id="btn-trace" onclick="OnTrace()">Trace</button>
+    <div class="dropdown" id="load-dropdown">
+      <button class="btn-secondary" onclick="toggleDropdown()">Load &nbsp;&#9662;</button>
+      <div class="dropdown-menu" id="dropdown-menu">
+        <div class="dropdown-section">
+          <div class="dropdown-section-label">Getting started</div>
+          <button class="dropdown-item" onclick="loadExample('atoms')">
+            Atoms &amp; quotation
+            <span class="dropdown-item-sub">QUOTE, ATOM, EQ — the primitives</span>
+          </button>
+          <button class="dropdown-item" onclick="loadExample('ff')">
+            Find first atom in tree
+            <span class="dropdown-item-sub">DEFINE + COND + recursion</span>
+          </button>
+          <button class="dropdown-item" onclick="loadExample('logic')">
+            Logic primitives
+            <span class="dropdown-item-sub">NOT, AND, OR built from COND</span>
+          </button>
+        </div>
+        <div class="dropdown-section">
+          <div class="dropdown-section-label">Data structures</div>
+          <button class="dropdown-item" onclick="loadExample('reverse')">
+            Reverse a list
+            <span class="dropdown-item-sub">Accumulator pattern</span>
+          </button>
+          <button class="dropdown-item" onclick="loadExample('equal')">
+            Structural equality
+            <span class="dropdown-item-sub">EQUAL built from EQ + recursion</span>
+          </button>
+          <button class="dropdown-item" onclick="loadExample('assoc')">
+            Association list lookup
+            <span class="dropdown-item-sub">ASSOC — the heart of environments</span>
+          </button>
+        </div>
+        <div class="dropdown-section">
+          <div class="dropdown-section-label">Advanced</div>
+          <button class="dropdown-item" onclick="loadExample('arithmetic')">
+            Binary arithmetic (full adder)
+            <span class="dropdown-item-sub">Addition on lists of bits</span>
+          </button>
+          <button class="dropdown-item" onclick="loadExample('diff')">
+            Symbolic differentiation
+            <span class="dropdown-item-sub">Calculus on S-expressions</span>
+          </button>
+        </div>
+        <div class="dropdown-section">
+          <div class="dropdown-section-label">SPO triple store (SICP &sect;4.4.1)</div>
+          <button class="dropdown-item" onclick="loadExample('microshaft')">
+            Microshaft personnel database
+            <span class="dropdown-item-sub">Full query engine + Microshaft DB + 10 queries</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="controls-sep"></div>
+    <button class="btn-secondary" onclick="OnShare()">Share</button>
+    <button class="btn-danger" onclick="OnReset()">Reset</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat-group">
+      <div class="stat">
+        <span class="stat-label">get</span>
+        <span class="stat-value" id="s-gets">0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">set</span>
+        <span class="stat-value" id="s-sets">0</span>
+      </div>
+    </div>
+    <div class="stat-group">
+      <div class="stat">
+        <span class="stat-label">code</span>
+        <span class="stat-value" id="s-code">0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">heap</span>
+        <span class="stat-value" id="s-heap">0</span>
+      </div>
+    </div>
+    <div class="stat-group">
+      <div class="stat">
+        <span class="stat-label">atom</span>
+        <span class="stat-value" id="s-atom">0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">ms</span>
+        <span class="stat-value" id="s-ms">0</span>
+      </div>
+    </div>
+    <div class="stat-group">
+      <div class="stat">
+        <span class="stat-label">read</span>
+        <span class="stat-value" id="s-reads">0</span>
+      </div>
+      <div class="stat">
+        <span class="stat-label">print</span>
+        <span class="stat-value" id="s-prints">0</span>
+      </div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// SectorLISP friendly-branch evaluator
+// Source: https://justine.lol/sectorlisp2/lisp.js
+// Copyright 2021 Justine Tunney — ISC License
+// Adapted for browser use (no readline/Bestline dependency)
+// ============================================================
+
+var Null = 16384;
+var M;
+var ax, cx, dx;
+var kEq, kCar, kCdr, kCond, kAtom, kCons, kQuote, kDefine;
+var cGets, cSets, cReads, cPrints, cHeap;
+var code, index;
+var lispDepth, lispPanic;
+var lispOut;
+var lispFuncall;
+
+function Get(i)    { ++cGets; return M[Null + i]; }
+function Set(i, x) { ++cSets; M[Null + i] = x; }
+
+function Car(x) {
+  if (x > 0) Throw(List(kCar, x));
+  return x ? Get(x) : +0;
+}
+function Cdr(x) {
+  if (x > 0) Throw(List(kCdr, x));
+  return x ? Get(x + 1) : -0;
+}
+function Cons(car, cdr) {
+  if (cx == -Null) Throw(kCons);
+  Set(--cx, cdr);
+  Set(--cx, car);
+  if (cx < cHeap) cHeap = cx;
+  return cx;
+}
+
+function Probe(h, p) { return (h + p * p) & (Null / 2 - 1); }
+function Hash(h, x)  { return (((h + x) * 3083 + 3191) >> 4) & (Null / 2 - 1); }
+
+function Intern(x, y, h, p) {
+  if (x == Get(h) && y == Get(h + Null / 2)) return h;
+  if (Get(h)) return Intern(x, y, Probe(h, p), p + 1);
+  Set(h, x);
+  Set(h + Null / 2, y);
+  return h;
+}
+
+function Ord(s) {
+  var c = s.charCodeAt(0);
+  return c;
+}
+
+function ReadChar() {
+  var c, t;
+  c = (index < code.length) ? code.charCodeAt(index++) : 0;
+  t = dx; dx = c; return t;
+}
+
+function ReadAtom() {
+  var x, y;
+  ax = y = 0;
+  do { x = ReadChar(); } while (x <= Ord(' '));
+  if (x > Ord(')') && dx > Ord(')')) y = ReadAtom();
+  return Intern(x, y, (ax = Hash(x, ax)), 1);
+}
+
+function ReadList() {
+  var x, y;
+  x = Read();
+  if (x > 0) {
+    if (Get(x) == Ord(')')) return -0;
+    if (Get(x) == Ord('.') && !Get(x + 1)) {
+      x = Read(); y = ReadList();
+      if (!y) return x; else Throw(y);
+    }
+  }
+  return Cons(x, ReadList());
+}
+
+function Read() {
+  ++cReads;
+  var t = ReadAtom();
+  if (Get(t) != Ord('(')) return t;
+  return ReadList();
+}
+
+function PC(c) { lispOut += String.fromCharCode(c); }
+
+function PrintAtom(x) {
+  do { PC(Get(x)); } while ((x = Get(x + Null / 2)));
+}
+
+function PrintList(x) {
+  PC(Ord('('));
+  if (x < 0) {
+    Print(Car(x));
+    while ((x = Cdr(x))) {
+      if (lispPanic && cPrints > lispPanic) {
+        PC(0x20); PC(0x2e); PC(0x2e); PC(0x2e);
+        break;
+      }
+      if (x < 0) {
+        PC(Ord(' ')); Print(Car(x));
+      } else {
+        PC(Ord(' ')); PC(Ord('.')); PC(Ord(' ')); Print(x);
+        break;
+      }
+    }
+  }
+  PC(Ord(')'));
+}
+
+function Print(x) {
+  ++cPrints;
+  if (1. / x < 0) PrintList(x); else PrintAtom(x);
+}
+
+function List(x, y) { return Cons(x, Cons(y, -0)); }
+
+function Copy(x, m, k) {
+  return x < m
+    ? Cons(Copy(Car(x), m, k), Copy(Cdr(x), m, k)) + k
+    : x;
+}
+
+function Gc(A, x) {
+  var C, B = cx;
+  x = Copy(x, A, A - B); C = cx;
+  while (C < B) Set(--A, Get(--B));
+  return (cx = A, x);
+}
+
+function Evcon(c, a) {
+  if (c >= 0) Throw(kCond);
+  if (Eval(Car(Car(c)), a)) return Eval(Car(Cdr(Car(c))), a);
+  return Evcon(Cdr(c), a);
+}
+
+function Peel(x, a) { return a && x == Car(Car(a)) ? Cdr(a) : a; }
+
+function Evlis(m, a) {
+  return m ? Cons(Eval(Car(m), a), Evlis(Cdr(m), a)) : m;
+}
+
+function Pairlis(x, y, a) {
+  return x
+    ? Cons(Cons(Car(x), Car(y)), Pairlis(Cdr(x), Cdr(y), Peel(Car(x), a)))
+    : a;
+}
+
+function Assoc(x, y) {
+  if (!y) Throw(x);
+  return x == Car(Car(y)) ? Cdr(Car(y)) : Assoc(x, Cdr(y));
+}
+
+function Apply(f, x, a) {
+  if (f < 0)      return Eval(Car(Cdr(Cdr(f))), Pairlis(Car(Cdr(f)), x, a));
+  if (f == kCons) return Cons(Car(x), Car(Cdr(x)));
+  if (f == kEq)   return Car(x) == Car(Cdr(x));
+  if (f == kAtom) return Car(x) >= 0;
+  if (f == kCar)  return Car(Car(x));
+  if (f == kCdr)  return Cdr(Car(x));
+  return lispFuncall(cx, f, Assoc(f, a), x, a);
+}
+
+function Eval(e, a) {
+  if (!e) return e;
+  if (e > 0) return Assoc(e, a);
+  if (Car(e) == kQuote) return Car(Cdr(e));
+  if (Car(e) == kCond)  return Evcon(Cdr(e), a);
+  return Apply(Car(e), Evlis(Cdr(e), a), a);
+}
+
+function Funcall(A, f, l, x, a) {
+  return Gc(A, Apply(l, x, a));
+}
+
+function Indent(n) {
+  for (var i = 0; i < n; i++) PC(Ord(' '));
+}
+
+function Funtrace(A, f, l, x, a) {
+  var y;
+  Indent(lispDepth);
+  Print(f); PC(Ord(' ')); Print(x); PC(Ord('\n'));
+  lispDepth += 2;
+  y = Funcall(cx, f, l, x, a);
+  lispDepth -= 2;
+  Indent(lispDepth);
+  Print(f); PC(Ord(' ')); Print(x);
+  PC(0x20); PC(0xe2); PC(0x86); PC(0x92); PC(0x20);
+  Print(y); PC(Ord('\n'));
+  return y;
+}
+
+function Throw(x) { throw x; }
+
+function Remove(x, y) {
+  if (!y) return y;
+  if (x == Car(Car(y))) return Cdr(y);
+  return Cons(Car(y), Remove(x, Cdr(y)));
+}
+
+function Crunch(e, B) {
+  var x, y, i;
+  if (e >= 0) return e;
+  x = Crunch(Car(e), B); y = Crunch(Cdr(e), B);
+  for (i = B - 2; i >= cx; i -= 2) {
+    if (x == Car(i) && y == Cdr(i)) return i - B;
+  }
+  return Cons(x, y) - B;
+}
+
+function Compact(x) {
+  var C, B = cx, A = 0;
+  x = Crunch(x, B); C = cx;
+  while (C < B) Set(--A, Get(--B));
+  return (cx = A, x);
+}
+
+function Define(x, a) {
+  return Compact(Cons(x, Remove(Car(x), a)));
+}
+
+function DumpDefines(a) {
+  var result = '';
+  function walk(a) {
+    if (!a) return;
+    walk(Cdr(a));
+    var saved = lispOut;
+    lispOut = '';
+    PC(Ord('(')); Print(kDefine); PC(Ord(' '));
+    Print(Car(Car(a))); PC(Ord(' ')); PC(Ord('.')); PC(Ord(' '));
+    Print(Cdr(Car(a))); PC(Ord(')'));
+    result += lispOut + '\n';
+    lispOut = saved;
+  }
+  walk(a);
+  return result;
+}
+
+function LoadBuiltins() {
+  Read(); Read();
+  kEq    = Read();
+  kCar   = Read();
+  kCdr   = Read();
+  kAtom  = Read();
+  kCond  = Read();
+  kCons  = Read();
+  kQuote = Read();
+  kDefine= Read();
+}
+
+function Load(s) {
+  index = 0;
+  dx    = Ord(' ');
+  code  = s.toUpperCase() + '\n';
+}
+
+// ── Global interpreter state ─────────────────────────────────
+var lispAlist = 0;
+
+function Reset() {
+  lispAlist = 0;
+  cx = 0; cHeap = 0;
+  cGets = cSets = cReads = cPrints = 0;
+  Null = 16384;
+  M = new Array(Null * 2).fill(0);
+  lispFuncall = Funcall;
+  lispDepth   = 0;
+  lispPanic   = 0;
+  Load('NIL T EQ CAR CDR ATOM COND CONS QUOTE DEFINE ');
+  LoadBuiltins();
+}
+
+function ReportStats(ms) {
+  var i, atomCount = 0;
+  for (i = 0; i < Null / 2; i++) {
+    if (M[Null + i]) atomCount++;
+  }
+  var codeCells = (-cx) >> 1;
+  var heapCells = (-cHeap) >> 1 - codeCells;
+  if (heapCells < 0) heapCells = 0;
+  document.getElementById('s-gets').textContent   = cGets.toLocaleString();
+  document.getElementById('s-sets').textContent   = cSets.toLocaleString();
+  document.getElementById('s-code').textContent   = codeCells.toLocaleString();
+  document.getElementById('s-heap').textContent   = heapCells.toLocaleString();
+  document.getElementById('s-atom').textContent   = atomCount.toLocaleString();
+  document.getElementById('s-ms').textContent     = (Math.round(ms * 10) / 10).toLocaleString();
+  document.getElementById('s-reads').textContent  = cReads.toLocaleString();
+  document.getElementById('s-prints').textContent = cPrints.toLocaleString();
+}
+
+function RunLisp(src, traceMode) {
+  lispOut   = '';
+  cGets     = cSets = cReads = cPrints = 0;
+  cHeap     = cx;
+  lispPanic = traceMode ? 2000 : 0;
+
+  var outputEl = document.getElementById('output');
+  outputEl.textContent = '';
+
+  var t0 = performance.now();
+  Load(src);
+
+  while (dx) {
+    if (dx <= Ord(' ')) { ReadChar(); continue; }
+    var A = cx;
+    lispOut = '';
+    try {
+      var x = Read();
+      if (x < 0 && Car(x) == kDefine) {
+        lispAlist = Define(Cdr(x), lispAlist);
+        // Do NOT Gc here — alist lives below A
+        continue;
+      }
+      x = Eval(x, lispAlist);
+      Print(x); PC(Ord('\n'));
+    } catch (z) {
+      lispOut = '? ';
+      var saved = lispOut;
+      lispOut = '';
+      try { Print(z); } catch(e2) {}
+      lispOut = saved + lispOut + '\n';
+    }
+    if (lispOut.trim()) {
+      var span = document.createElement('span');
+      span.className = lispOut.startsWith('?') ? 'out-error' : 'out-result';
+      span.textContent = lispOut;
+      outputEl.appendChild(span);
+    }
+    Gc(A, 0);
+  }
+
+  var ms = performance.now() - t0;
+  ReportStats(ms);
+}
+
+// ── UI actions ───────────────────────────────────────────────
+
+function OnEval() {
+  var traceBtn = document.getElementById('btn-trace');
+  var tracing  = traceBtn.classList.contains('active');
+  lispFuncall  = tracing ? Funtrace : Funcall;
+  lispDepth    = 0;
+  document.getElementById('output-hint').textContent = '';
+  RunLisp(document.getElementById('editor').value, tracing);
+}
+
+function OnTrace() {
+  var btn = document.getElementById('btn-trace');
+  btn.classList.toggle('active');
+  if (btn.classList.contains('active')) {
+    lispFuncall = Funtrace;
+    document.getElementById('output-hint').textContent = 'trace mode on';
+  } else {
+    lispFuncall = Funcall;
+    document.getElementById('output-hint').textContent = '';
+  }
+}
+
+function OnReset() {
+  Reset();
+  document.getElementById('output').textContent = '';
+  document.getElementById('output-hint').textContent = '';
+  document.getElementById('btn-trace').classList.remove('active');
+  lispFuncall = Funcall;
+  ['s-gets','s-sets','s-code','s-heap','s-atom','s-ms','s-reads','s-prints']
+    .forEach(function(id){ document.getElementById(id).textContent = '0'; });
+  showToast('Session reset');
+}
+
+function OnShare() {
+  var src = document.getElementById('editor').value;
+  var encoded = btoa(unescape(encodeURIComponent(src)));
+  var url = location.href.split('#')[0] + '#' + encoded;
+  try {
+    navigator.clipboard.writeText(url).then(function() {
+      showToast('Link copied to clipboard');
+    }, function() {
+      prompt('Copy this link:', url);
+    });
+  } catch(e) {
+    prompt('Copy this link:', url);
+  }
+}
+
+function toggleDropdown() {
+  document.getElementById('dropdown-menu').classList.toggle('open');
+}
+
+document.addEventListener('click', function(e) {
+  var dd = document.getElementById('load-dropdown');
+  if (!dd.contains(e.target)) {
+    document.getElementById('dropdown-menu').classList.remove('open');
+  }
+});
+
+function loadExample(name) {
+  document.getElementById('dropdown-menu').classList.remove('open');
+  document.getElementById('editor').value = EXAMPLES[name] || '';
+  document.getElementById('output').textContent = '';
+  document.getElementById('output-hint').textContent = '';
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2200);
+}
+
+// ── Load from URL hash ───────────────────────────────────────
+function loadFromHash() {
+  var hash = location.hash.slice(1);
+  if (hash) {
+    try {
+      var src = decodeURIComponent(escape(atob(hash)));
+      document.getElementById('editor').value = src;
+    } catch(e) {}
+  }
+}
+
+// ── Example programs ─────────────────────────────────────────
+var EXAMPLES = {};
+
+EXAMPLES['atoms'] = `(QUOTE HELLO)
+
+(ATOM (QUOTE HELLO))
+
+(ATOM (QUOTE (A B)))
+
+(EQ (QUOTE A) (QUOTE A))
+
+(EQ (QUOTE A) (QUOTE B))
+
+(CAR (QUOTE (A B C)))
+
+(CDR (QUOTE (A B C)))
+
+(CONS (QUOTE A) (QUOTE (B C)))`;
+
+EXAMPLES['ff'] = `(DEFINE FF .
+  (LAMBDA (X)
+    (COND ((ATOM X) X)
+          ((QUOTE T) (FF (CAR X))))))
+
+(FF (QUOTE ((A) B C)))
+
+(FF (QUOTE (((DEEP) INSIDE) THE TREE)))`;
+
+EXAMPLES['logic'] = `(DEFINE T . T)
+
+(DEFINE NOT .
+  (LAMBDA (X)
+    (COND (X NIL)
+          (T T))))
+
+(DEFINE AND .
+  (LAMBDA (X Y)
+    (COND (X Y)
+          (T NIL))))
+
+(DEFINE OR .
+  (LAMBDA (X Y)
+    (COND (X T)
+          (T Y))))
+
+(NOT NIL)
+(NOT T)
+(AND T T)
+(AND T NIL)
+(AND NIL T)
+(OR NIL NIL)
+(OR NIL T)
+(OR T NIL)`;
+
+EXAMPLES['reverse'] = `(DEFINE T . T)
+
+(DEFINE REVERSE .
+  (LAMBDA (X Y)
+    (COND (X (REVERSE (CDR X)
+                      (CONS (CAR X) Y)))
+          (T Y))))
+
+(REVERSE (QUOTE (A B C D)) ())
+
+(REVERSE (QUOTE (1 2 3 4 5)) ())`;
+
+EXAMPLES['equal'] = `(DEFINE T . T)
+
+(DEFINE EQUAL .
+  (LAMBDA (X Y)
+    (COND ((ATOM X)
+           (COND ((ATOM Y) (EQ X Y))
+                 (T NIL)))
+          ((ATOM Y) NIL)
+          ((EQUAL (CAR X) (CAR Y))
+           (EQUAL (CDR X) (CDR Y)))
+          (T NIL))))
+
+(EQUAL (QUOTE A) (QUOTE A))
+
+(EQUAL (QUOTE A) (QUOTE B))
+
+(EQUAL (QUOTE (A B C)) (QUOTE (A B C)))
+
+(EQUAL (QUOTE (A B C)) (QUOTE (A B D)))
+
+(EQUAL (QUOTE (A (B C) D)) (QUOTE (A (B C) D)))`;
+
+EXAMPLES['assoc'] = `(DEFINE T . T)
+
+(DEFINE ASSOC .
+  (LAMBDA (KEY ALIST)
+    (COND ((ATOM ALIST) NIL)
+          ((EQ KEY (CAR (CAR ALIST)))
+           (CDR (CAR ALIST)))
+          (T (ASSOC KEY (CDR ALIST))))))
+
+(DEFINE ENV .
+  (QUOTE ((X . HELLO)
+          (Y . WORLD)
+          (Z . LISP))))
+
+(ASSOC (QUOTE X) ENV)
+
+(ASSOC (QUOTE Y) ENV)
+
+(ASSOC (QUOTE Z) ENV)
+
+(ASSOC (QUOTE W) ENV)`;
+
+EXAMPLES['arithmetic'] = `(DEFINE T . T)
+
+(DEFINE NOT  . (LAMBDA (X) (COND (X NIL) (T T))))
+(DEFINE OR   . (LAMBDA (X Y) (COND (X T) (T Y))))
+(DEFINE AND  . (LAMBDA (X Y) (COND (X Y) (T NIL))))
+(DEFINE XOR  . (LAMBDA (X Y) (COND (X (NOT Y)) (T Y))))
+(DEFINE HEAD . (LAMBDA (X) (COND (X (CAR X)) (T NIL))))
+(DEFINE TAIL . (LAMBDA (X) (COND (X (CDR X)) (T ()))))
+
+(DEFINE EQUAL .
+  (LAMBDA (X Y)
+    (COND ((ATOM X) (COND ((ATOM Y) (EQ X Y)) (T NIL)))
+          ((ATOM Y) NIL)
+          ((EQUAL (CAR X) (CAR Y)) (EQUAL (CDR X) (CDR Y)))
+          (T NIL))))
+
+(DEFINE ADD .
+  (LAMBDA (A B C)
+    (COND ((OR A B)
+           (CONS (XOR (XOR (HEAD A) (HEAD B)) C)
+                 (ADD (TAIL A) (TAIL B)
+                      (OR (AND (XOR (HEAD A) (HEAD B)) C)
+                          (AND (HEAD A) (HEAD B))))))
+          (C (CONS C ()))
+          (T ()))))
+
+(DEFINE + . (LAMBDA (A B) (ADD A B NIL)))
+
+(DEFINE COMMENT . (QUOTE 0+0=0))
+(EQUAL (+ () ()) ())
+
+(DEFINE COMMENT . (QUOTE 1+1=2-IN-BINARY-NIL-T))
+(EQUAL (+ (QUOTE (T)) (QUOTE (T))) (QUOTE (NIL T)))
+
+(DEFINE COMMENT . (QUOTE 3+5=8))
+(EQUAL (+ (QUOTE (T T)) (QUOTE (T NIL T))) (QUOTE (NIL NIL NIL T)))
+
+(DEFINE COMMENT . (QUOTE 10+10=20-IN-BINARY))
+(EQUAL (+ (QUOTE (NIL T NIL T)) (QUOTE (NIL T NIL T)))
+          (QUOTE (NIL NIL T NIL T)))`;
+
+EXAMPLES['diff'] = `(DEFINE T . T)
+
+(DEFINE EQUAL .
+  (LAMBDA (X Y)
+    (COND ((ATOM X) (COND ((ATOM Y) (EQ X Y)) (T NIL)))
+          ((ATOM Y) NIL)
+          ((EQUAL (CAR X) (CAR Y)) (EQUAL (CDR X) (CDR Y)))
+          (T NIL))))
+
+(DEFINE 0 . 0)
+(DEFINE 1 . 1)
+(DEFINE ADD . ADD)
+(DEFINE SUB . SUB)
+(DEFINE MUL . MUL)
+(DEFINE DIV . DIV)
+(DEFINE POW . POW)
+(DEFINE LOG . LOG)
+
+(DEFINE L2 . (LAMBDA (X Y) (CONS X (CONS Y ()))))
+(DEFINE L3 . (LAMBDA (X Y Z) (CONS X (L2 Y Z))))
+
+(DEFINE DIFF .
+  (LAMBDA (E WRT)
+    (COND ((EQ E WRT) 1)
+          ((ATOM E)  0)
+          ((QUOTE T)
+           (DIFF3 (CAR E)
+                  (CAR (CDR E))
+                  (COND ((CDR (CDR E)) (CAR (CDR (CDR E))))
+                        ((QUOTE T) NIL)))))))
+
+(DEFINE DIFF3 .
+  (LAMBDA (OP X Y)
+    (COND
+      ((EQ OP ADD) (L3 OP (DIFF X WRT) (DIFF Y WRT)))
+      ((EQ OP SUB) (L3 OP (DIFF X WRT) (DIFF Y WRT)))
+      ((EQ OP MUL) (L3 ADD
+                       (L3 MUL X (DIFF Y WRT))
+                       (L3 MUL (DIFF X WRT) Y)))
+      ((EQ OP POW)
+       (L3 ADD
+           (L3 MUL (L3 POW X Y) (L3 MUL (L2 LOG X) (DIFF Y WRT)))
+           (L3 MUL Y (L3 MUL (L3 POW X (L3 SUB Y 1)) (DIFF X WRT)))))
+      ((EQ OP (QUOTE SIN))
+       (L3 MUL (DIFF X WRT) (L2 (QUOTE COS) X)))
+      ((EQ OP (QUOTE COS))
+       (L3 SUB 0 (L3 MUL (DIFF X WRT) (L2 (QUOTE SIN) X))))
+      ((QUOTE T) (QUOTE HOW)))))
+
+(DEFINE COMMENT . (QUOTE D/DX-X-=-1))
+(EQUAL 1 (DIFF (QUOTE X) (QUOTE X)))
+
+(DEFINE COMMENT . (QUOTE D/DX-X+X-=-1+1))
+(EQUAL (QUOTE (ADD 1 1))
+       (DIFF (QUOTE (ADD X X)) (QUOTE X)))
+
+(DEFINE COMMENT . (QUOTE D/DX-X*Y-=-Y))
+(EQUAL (QUOTE (ADD (MUL X 0) (MUL 1 Y)))
+       (DIFF (QUOTE (MUL X Y)) (QUOTE X)))
+
+(DEFINE COMMENT . (QUOTE D/DX-SIN-X-=-COS-X))
+(EQUAL (QUOTE (COS X))
+       (DIFF (QUOTE (SIN X)) (QUOTE X)))`;
+
+EXAMPLES['microshaft'] = `(DEFINE COMMENT . (QUOTE SPO-TRIPLE-STORE-QUERY-ENGINE))
+(DEFINE COMMENT . (QUOTE SICP-SECTION-4-4-1-MICROSHAFT-DATABASE))
+(DEFINE COMMENT . (QUOTE SECTORLISP-FRIENDLY-BRANCH))
+
+(DEFINE COMMENT . (QUOTE ---PART-1-FOUNDATION---))
+
+(DEFINE T . T)
+
+(DEFINE APPEND . (LAMBDA (X Y)
+  (COND ((ATOM X) Y)
+        (T (CONS (CAR X) (APPEND (CDR X) Y))))))
+
+(DEFINE EQUAL . (LAMBDA (X Y)
+  (COND ((ATOM X)
+         (COND ((ATOM Y) (EQ X Y))
+               (T NIL)))
+        ((ATOM Y) NIL)
+        ((EQUAL (CAR X) (CAR Y)) (EQUAL (CDR X) (CDR Y)))
+        (T NIL))))
+
+(DEFINE COMMENT . (QUOTE ---PART-2-VARIABLES-ARE-TWO-ELEMENT-LISTS-WITH-CAR-QUESTION-MARK---))
+
+(DEFINE VARIABLEP . (LAMBDA (X)
+  (COND ((ATOM X) NIL)
+        ((EQ (CAR X) (QUOTE ?)) T)
+        (T NIL))))
+
+(DEFINE LOOKUP . (LAMBDA (VAR BINDS)
+  (COND ((ATOM BINDS) NIL)
+        ((EQUAL (CAR (CAR BINDS)) VAR) (CAR BINDS))
+        (T (LOOKUP VAR (CDR BINDS))))))
+
+(DEFINE COMMENT . (QUOTE ---PART-3-PATTERN-MATCHING---))
+
+(DEFINE MATCH . (LAMBDA (PAT DAT BINDS)
+  (COND
+    ((EQ BINDS (QUOTE FAIL)) (QUOTE FAIL))
+    ((ATOM PAT)
+     (COND ((ATOM DAT)
+            (COND ((EQ PAT DAT) BINDS)
+                  (T (QUOTE FAIL))))
+           (T (QUOTE FAIL))))
+    ((VARIABLEP PAT)
+     ((LAMBDA (B)
+        (COND (B (MATCH (CDR B) DAT BINDS))
+              (T (CONS (CONS PAT DAT) BINDS))))
+      (LOOKUP PAT BINDS)))
+    ((ATOM DAT) (QUOTE FAIL))
+    (T (MATCH (CDR PAT) (CDR DAT)
+              (MATCH (CAR PAT) (CAR DAT) BINDS))))))
+
+(DEFINE SUBS . (LAMBDA (TMPL BINDS)
+  (COND ((ATOM TMPL) TMPL)
+        ((VARIABLEP TMPL)
+         ((LAMBDA (B)
+            (COND (B (CDR B))
+                  (T TMPL)))
+          (LOOKUP TMPL BINDS)))
+        (T (CONS (SUBS (CAR TMPL) BINDS)
+                 (SUBS (CDR TMPL) BINDS))))))
+
+(DEFINE MAP-SUBS . (LAMBDA (BIND-LIST TMPL)
+  (COND ((ATOM BIND-LIST) NIL)
+        (T (CONS (SUBS TMPL (CAR BIND-LIST))
+                 (MAP-SUBS (CDR BIND-LIST) TMPL))))))
+
+(DEFINE COMMENT . (QUOTE ---PART-4-QUERY-ENGINE---))
+
+(DEFINE QUERY-SIMPLE . (LAMBDA (PAT BINDS DB)
+  (COND ((ATOM DB) NIL)
+        (T ((LAMBDA (B REST)
+               (COND ((EQ B (QUOTE FAIL)) REST)
+                     (T (CONS B REST))))
+             (MATCH PAT (CAR DB) BINDS)
+             (QUERY-SIMPLE PAT BINDS (CDR DB)))))))
+
+(DEFINE MAPQUERY . (LAMBDA (EXPR BIND-LIST DB)
+  (COND ((ATOM BIND-LIST) NIL)
+        (T (APPEND (QUERY EXPR (CAR BIND-LIST) DB)
+                   (MAPQUERY EXPR (CDR BIND-LIST) DB))))))
+
+(DEFINE QUERY-AND . (LAMBDA (CONJUNCTS BIND-LIST DB)
+  (COND ((ATOM CONJUNCTS) BIND-LIST)
+        (T (QUERY-AND (CDR CONJUNCTS)
+                      (MAPQUERY (CAR CONJUNCTS) BIND-LIST DB)
+                      DB)))))
+
+(DEFINE QUERY-OR . (LAMBDA (DISJUNCTS BINDS DB)
+  (COND ((ATOM DISJUNCTS) NIL)
+        (T (APPEND (QUERY (CAR DISJUNCTS) BINDS DB)
+                   (QUERY-OR (CDR DISJUNCTS) BINDS DB))))))
+
+(DEFINE QUERY-NOT . (LAMBDA (EXPR BINDS DB)
+  (COND ((QUERY EXPR BINDS DB) NIL)
+        (T (CONS BINDS NIL)))))
+
+(DEFINE QUERY . (LAMBDA (EXPR BINDS DB)
+  (COND ((EQ (CAR EXPR) (QUOTE AND))
+         (QUERY-AND (CDR EXPR) (CONS BINDS NIL) DB))
+        ((EQ (CAR EXPR) (QUOTE OR))
+         (QUERY-OR (CDR EXPR) BINDS DB))
+        ((EQ (CAR EXPR) (QUOTE NOT))
+         (QUERY-NOT (CAR (CDR EXPR)) BINDS DB))
+        (T (QUERY-SIMPLE EXPR BINDS DB)))))
+
+(DEFINE ANSWER . (LAMBDA (EXPR TMPL DB)
+  (MAP-SUBS (QUERY EXPR NIL DB) TMPL)))
+
+(DEFINE COMMENT . (QUOTE ---PART-5-MICROSHAFT-DATABASE---))
+(DEFINE COMMENT . (QUOTE THE-DB-IS-A-ZERO-ARG-LAMBDA-BECAUSE-DEFINE-STORES-RAW))
+(DEFINE COMMENT . (QUOTE WRAPPING-IN-LAMBDA-DEFERS-QUOTE-EVALUATION-TO-CALL-TIME))
+
+(DEFINE MICROSHAFT-DB . (LAMBDA ()
+  (QUOTE (
+    (TRIPLE BITDIDDLE-BEN  NAME       (BITDIDDLE BEN))
+    (TRIPLE BITDIDDLE-BEN  JOB        (COMPUTER WIZARD))
+    (TRIPLE BITDIDDLE-BEN  SALARY     60000)
+    (TRIPLE BITDIDDLE-BEN  ADDRESS    (SLUMERVILLE (RIDGE ROAD) 10))
+    (TRIPLE BITDIDDLE-BEN  SUPERVISOR WARBUCKS-OLIVER)
+    (TRIPLE HACKER-ALYSSA  NAME       (HACKER ALYSSA P))
+    (TRIPLE HACKER-ALYSSA  JOB        (COMPUTER PROGRAMMER))
+    (TRIPLE HACKER-ALYSSA  SALARY     40000)
+    (TRIPLE HACKER-ALYSSA  ADDRESS    (CAMBRIDGE (MASS AVE) 78))
+    (TRIPLE HACKER-ALYSSA  SUPERVISOR BITDIDDLE-BEN)
+    (TRIPLE FECT-CY        NAME       (FECT CY D))
+    (TRIPLE FECT-CY        JOB        (COMPUTER PROGRAMMER))
+    (TRIPLE FECT-CY        SALARY     35000)
+    (TRIPLE FECT-CY        ADDRESS    (CAMBRIDGE (AMES STREET) 3))
+    (TRIPLE FECT-CY        SUPERVISOR BITDIDDLE-BEN)
+    (TRIPLE TWEAKIT-LEM    NAME       (TWEAKIT LEM E))
+    (TRIPLE TWEAKIT-LEM    JOB        (COMPUTER TECHNICIAN))
+    (TRIPLE TWEAKIT-LEM    SALARY     25000)
+    (TRIPLE TWEAKIT-LEM    ADDRESS    (BOSTON (BAY STATE ROAD) 22))
+    (TRIPLE TWEAKIT-LEM    SUPERVISOR BITDIDDLE-BEN)
+    (TRIPLE REASONER-LOUIS NAME       (REASONER LOUIS))
+    (TRIPLE REASONER-LOUIS JOB        (COMPUTER PROGRAMMER TRAINEE))
+    (TRIPLE REASONER-LOUIS SALARY     30000)
+    (TRIPLE REASONER-LOUIS ADDRESS    (SLUMERVILLE (PINE TREE ROAD) 80))
+    (TRIPLE REASONER-LOUIS SUPERVISOR HACKER-ALYSSA)
+    (TRIPLE WARBUCKS-OLIVER NAME      (WARBUCKS OLIVER))
+    (TRIPLE WARBUCKS-OLIVER JOB       (ADMINISTRATION BIG WHEEL))
+    (TRIPLE WARBUCKS-OLIVER SALARY    150000)
+    (TRIPLE WARBUCKS-OLIVER ADDRESS   (SWELLESLEY (TOP HEAP ROAD)))
+    (TRIPLE SCROOGE-EBEN   NAME       (SCROOGE EBEN))
+    (TRIPLE SCROOGE-EBEN   JOB        (ACCOUNTING CHIEF ACCOUNTANT))
+    (TRIPLE SCROOGE-EBEN   SALARY     75000)
+    (TRIPLE SCROOGE-EBEN   ADDRESS    (WESTON (SHADY LANE) 10))
+    (TRIPLE SCROOGE-EBEN   SUPERVISOR WARBUCKS-OLIVER)
+    (TRIPLE CRATCHET-ROBERT NAME      (CRATCHET ROBERT))
+    (TRIPLE CRATCHET-ROBERT JOB       (ACCOUNTING SCRIVENER))
+    (TRIPLE CRATCHET-ROBERT SALARY    18000)
+    (TRIPLE CRATCHET-ROBERT ADDRESS   (ALLSTON (N HARVARD STREET) 16))
+    (TRIPLE CRATCHET-ROBERT SUPERVISOR SCROOGE-EBEN)
+    (TRIPLE AULL-DEWITT    NAME       (AULL DEWITT))
+    (TRIPLE AULL-DEWITT    JOB        (ADMINISTRATION SECRETARY))
+    (TRIPLE AULL-DEWITT    SALARY     25000)
+    (TRIPLE AULL-DEWITT    ADDRESS    (SLUMERVILLE (ONION SQUARE) 5))
+    (TRIPLE AULL-DEWITT    SUPERVISOR WARBUCKS-OLIVER)
+    (TRIPLE (COMPUTER WIZARD)          CAN-DO-JOB (COMPUTER PROGRAMMER))
+    (TRIPLE (COMPUTER WIZARD)          CAN-DO-JOB (COMPUTER TECHNICIAN))
+    (TRIPLE (COMPUTER PROGRAMMER)      CAN-DO-JOB (COMPUTER PROGRAMMER TRAINEE))
+    (TRIPLE (ADMINISTRATION SECRETARY) CAN-DO-JOB (ADMINISTRATION BIG WHEEL))
+  ))))
+
+(DEFINE COMMENT . (QUOTE ---PART-6-QUERIES---))
+
+(DEFINE COMMENT . (QUOTE Q1-COMPUTER-PROGRAMMERS))
+(ANSWER
+  (QUOTE (TRIPLE (? P) JOB (COMPUTER PROGRAMMER)))
+  (QUOTE (? P))
+  (MICROSHAFT-DB))
+
+(DEFINE COMMENT . (QUOTE Q2-ALL-JOBS))
+(ANSWER
+  (QUOTE (TRIPLE (? P) JOB (? J)))
+  (QUOTE ((? P) HAS-JOB (? J)))
+  (MICROSHAFT-DB))
+
+(DEFINE COMMENT . (QUOTE Q3-BENS-DIRECT-REPORTS))
+(ANSWER
+  (QUOTE (TRIPLE (? P) SUPERVISOR BITDIDDLE-BEN))
+  (QUOTE (? P))
+  (MICROSHAFT-DB))
+
+(DEFINE COMMENT . (QUOTE Q4-JOIN-BENS-REPORTS-WITH-THEIR-JOBS))
+(ANSWER
+  (QUOTE (AND (TRIPLE (? P) SUPERVISOR BITDIDDLE-BEN)
+              (TRIPLE (? P) JOB (? J))))
+  (QUOTE ((? P) HAS-JOB (? J)))
+  (MICROSHAFT-DB))
+
+(DEFINE COMMENT . (QUOTE Q5-TWO-HOP-CHAIN-UNDER-WARBUCKS))
+(ANSWER
+  (QUOTE (AND (TRIPLE (? P) SUPERVISOR (? MID))
+              (TRIPLE (? MID) SUPERVISOR WARBUCKS-OLIVER)))
+  (QUOTE ((? P) UNDER (? MID)))
+  (MICROSHAFT-DB))
+
+(DEFINE COMMENT . (QUOTE Q6-OR-PROGRAMMERS-OR-TECHNICIANS))
+(ANSWER
+  (QUOTE (OR (TRIPLE (? P) JOB (COMPUTER PROGRAMMER))
+             (TRIPLE (? P) JOB (COMPUTER TECHNICIAN))))
+  (QUOTE (? P))
+  (MICROSHAFT-DB))
+
+(DEFINE COMMENT . (QUOTE Q7-NOT-BENS-DIRECT-REPORT))
+(ANSWER
+  (QUOTE (AND (TRIPLE (? P) SUPERVISOR (? B))
+              (NOT (TRIPLE (? P) SUPERVISOR BITDIDDLE-BEN))))
+  (QUOTE ((? P) BOSS IS (? B)))
+  (MICROSHAFT-DB))
+
+(DEFINE COMMENT . (QUOTE Q8-SLUMERVILLE-RESIDENTS))
+(ANSWER
+  (QUOTE (TRIPLE (? P) ADDRESS (SLUMERVILLE . (? REST))))
+  (QUOTE ((? P) LIVES-IN SLUMERVILLE))
+  (MICROSHAFT-DB))
+
+(DEFINE COMMENT . (QUOTE Q9-WHAT-CAN-A-WIZARD-DO))
+(ANSWER
+  (QUOTE (TRIPLE (COMPUTER WIZARD) CAN-DO-JOB (? J)))
+  (QUOTE (WIZARD-CAN-COVER (? J)))
+  (MICROSHAFT-DB))
+
+(DEFINE COMMENT . (QUOTE Q10-FULL-REPORTING-CHAIN-WITH-DISPLAY-NAMES))
+(ANSWER
+  (QUOTE (AND (TRIPLE (? P) SUPERVISOR (? BOSS))
+              (TRIPLE (? BOSS) NAME (? BNAME))
+              (TRIPLE (? P) NAME (? PNAME))))
+  (QUOTE ((? PNAME) REPORTS-TO (? BNAME)))
+  (MICROSHAFT-DB))`;
+
+// ── Boot ─────────────────────────────────────────────────────
+Reset();
+loadFromHash();
+</script>
+</body>
+</html>
