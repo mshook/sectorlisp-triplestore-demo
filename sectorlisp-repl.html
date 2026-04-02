@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SectorLISP — REPL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── Reset ──────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --paper:      #F9F7F2;
+  --paper-2:    #F2EFE8;
+  --paper-3:    #EAE6DC;
+  --ink:        #1C1914;
+  --ink-2:      #5A5449;
+  --ink-3:      #9A9389;
+  --rule:       #DDD9D0;
+  --rule-2:     #CECA C0;
+  --amber:      #B5722A;
+  --amber-dim:  #F5EDE0;
+  --amber-rule: #E8D4B8;
+  --red:        #A83228;
+  --green:      #2A6644;
+  --mono:       'JetBrains Mono', 'Fira Code', monospace;
+  --serif:      'Lora', Georgia, serif;
+}
+
+html, body {
+  height: 100%;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Page shell ─────────────────────────────────────────── */
+.page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 20px;
+  height: 48px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+}
+
+.h-title {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 500;
+  font-style: italic;
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+
+.h-badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--amber);
+  background: var(--amber-dim);
+  border: 1px solid var(--amber-rule);
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+
+.h-sep { flex: 1; }
+
+.h-link {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  text-decoration: none;
+  letter-spacing: 0.01em;
+}
+.h-link:hover { color: var(--amber); }
+
+/* ── Toolbar ─────────────────────────────────────────────── */
+.toolbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 20px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper-2);
+  flex-wrap: wrap;
+}
+
+.toolbar-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--rule);
+  margin: 0 2px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+button {
+  font-family: var(--serif);
+  font-size: 13px;
+  font-style: italic;
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 4px 13px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink-2);
+  transition: background .1s, color .1s, border-color .1s;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+button:hover { background: var(--paper-3); border-color: var(--rule); color: var(--ink); }
+
+.btn-run {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+  font-style: normal;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 4px 14px;
+}
+.btn-run:hover { background: #3A3632; border-color: #3A3632; color: var(--paper); }
+
+.btn-trace.active {
+  background: var(--amber-dim);
+  color: var(--amber);
+  border-color: var(--amber-rule);
+}
+
+/* ── Dropdown ─────────────────────────────────────────────── */
+.dropdown { position: relative; }
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.10), 0 2px 6px rgba(0,0,0,.06);
+  min-width: 300px;
+  z-index: 200;
+  overflow: hidden;
+}
+.dropdown-menu.open { display: block; }
+.dropdown-section {
+  padding: 5px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.dropdown-section:last-child { border-bottom: none; }
+.dropdown-section-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 4px 14px 2px;
+}
+.dropdown-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-style: normal;
+  color: var(--ink);
+  cursor: pointer;
+  font-family: var(--serif);
+  transition: background .08s;
+  letter-spacing: 0;
+}
+.dropdown-item:hover { background: var(--paper-2); }
+.dropdown-item-sub {
+  font-size: 11px;
+  color: var(--ink-3);
+  display: block;
+  margin-top: 1px;
+  font-style: italic;
+}
+
+/* ── History ─────────────────────────────────────────────── */
+#history {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 28px 8px;
+  scroll-behavior: smooth;
+}
+
+/* Welcome message */
+.welcome {
+  max-width: 560px;
+  margin: 0 auto 32px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.welcome-title {
+  font-size: 18px;
+  font-weight: 500;
+  font-style: italic;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.welcome-body {
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.7;
+}
+.welcome-body code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--paper-3);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-style: normal;
+}
+
+/* Each exchange */
+.exchange {
+  max-width: 680px;
+  margin: 0 auto 20px;
+  animation: fadeSlideIn .15s ease-out;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.exchange-input {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+
+.prompt-mark {
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--amber);
+  font-weight: 500;
+  padding-top: 1px;
+  user-select: none;
+  line-height: 1.6;
+}
+
+.exchange-expr {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink);
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.6;
+  flex: 1;
+}
+
+.exchange-output {
+  padding-left: 26px;
+}
+
+.output-value {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--green);
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.6;
+}
+
+.output-define {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-3);
+  font-style: italic;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+}
+
+.output-error {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--red);
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+.output-trace {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--ink-2);
+  white-space: pre;
+  overflow-x: auto;
+  line-height: 1.55;
+  border-left: 2px solid var(--rule);
+  padding-left: 10px;
+  margin-bottom: 4px;
+}
+
+/* ── Input area ──────────────────────────────────────────── */
+.input-area {
+  flex-shrink: 0;
+  border-top: 1px solid var(--rule);
+  background: var(--paper);
+  padding: 10px 20px 12px;
+}
+
+.input-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.input-prompt {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--amber);
+  font-weight: 500;
+  padding-top: 7px;
+  user-select: none;
+  flex-shrink: 0;
+  line-height: 1.6;
+}
+
+#repl-input {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--ink);
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  line-height: 1.6;
+  padding: 6px 0;
+  min-height: 34px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+#repl-input::placeholder {
+  color: var(--ink-3);
+  font-style: italic;
+}
+
+.input-hint {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  padding-top: 9px;
+  flex-shrink: 0;
+  user-select: none;
+  letter-spacing: 0.02em;
+}
+
+/* ── Stats ───────────────────────────────────────────────── */
+.stats-bar {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border-top: 1px solid var(--rule);
+  background: var(--paper-2);
+  padding: 5px 20px;
+}
+
+.stat {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 2px 10px;
+  border-right: 1px solid var(--rule);
+}
+.stat:first-child { padding-left: 0; }
+.stat:last-child { border-right: none; }
+
+.stat-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.stat-value {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-2);
+  min-width: 28px;
+}
+
+/* ── Toast ───────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 72px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 13px;
+  padding: 9px 18px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity .2s, transform .2s;
+  pointer-events: none;
+  z-index: 300;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── Scrollbar ───────────────────────────────────────────── */
+#history::-webkit-scrollbar { width: 6px; }
+#history::-webkit-scrollbar-track { background: transparent; }
+#history::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 3px; }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 600px) {
+  #history { padding: 16px 14px 8px; }
+  .input-area { padding: 8px 14px 10px; }
+  .stats-bar { padding: 4px 14px; }
+  .exchange, .input-row { max-width: 100%; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- Header -->
+<header>
+  <span class="h-title">SectorLISP</span>
+  <span class="h-badge">friendly branch</span>
+  <span class="h-sep"></span>
+  <a class="h-link" href="https://justine.lol/sectorlisp2/" target="_blank" rel="noopener">justine.lol/sectorlisp2 &nearr;</a>
+</header>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <button class="btn-trace" id="btn-trace" onclick="toggleTrace()">Trace</button>
+
+  <div class="toolbar-sep"></div>
+
+  <div class="dropdown" id="load-dd">
+    <button onclick="toggleDropdown()">Load example &nbsp;&#9662;</button>
+    <div class="dropdown-menu" id="dropdown-menu">
+      <div class="dropdown-section">
+        <div class="dropdown-section-label">Getting started</div>
+        <button class="dropdown-item" onclick="loadEx('ff')">Find first atom in tree
+          <span class="dropdown-item-sub">DEFINE + COND + recursion</span></button>
+        <button class="dropdown-item" onclick="loadEx('atoms')">Atoms &amp; quotation
+          <span class="dropdown-item-sub">QUOTE, ATOM, EQ — the primitives</span></button>
+        <button class="dropdown-item" onclick="loadEx('logic')">Logic primitives
+          <span class="dropdown-item-sub">NOT, AND, OR built from COND</span></button>
+      </div>
+      <div class="dropdown-section">
+        <div class="dropdown-section-label">Data structures</div>
+        <button class="dropdown-item" onclick="loadEx('reverse')">Reverse a list
+          <span class="dropdown-item-sub">Accumulator pattern</span></button>
+        <button class="dropdown-item" onclick="loadEx('equal')">Structural equality
+          <span class="dropdown-item-sub">EQUAL built from EQ + recursion</span></button>
+        <button class="dropdown-item" onclick="loadEx('assoc')">Association list
+          <span class="dropdown-item-sub">ASSOC — the heart of environments</span></button>
+      </div>
+      <div class="dropdown-section">
+        <div class="dropdown-section-label">Advanced</div>
+        <button class="dropdown-item" onclick="loadEx('arith')">Binary arithmetic
+          <span class="dropdown-item-sub">Full adder on lists of bits</span></button>
+        <button class="dropdown-item" onclick="loadEx('diff')">Symbolic differentiation
+          <span class="dropdown-item-sub">Calculus on S-expressions</span></button>
+      </div>
+      <div class="dropdown-section">
+        <div class="dropdown-section-label">SPO triple store (SICP &sect;4.4.1)</div>
+        <button class="dropdown-item" onclick="loadEx('microshaft')">Microshaft — load engine + DB
+          <span class="dropdown-item-sub">Defines all functions and the Microshaft database</span></button>
+        <button class="dropdown-item" onclick="loadEx('queries')">Microshaft — run queries
+          <span class="dropdown-item-sub">Ten example queries (load engine + DB first)</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toolbar-sep"></div>
+
+  <button onclick="onShare()">Share</button>
+  <button onclick="onClear()">Clear</button>
+  <button onclick="onReset()">Reset session</button>
+</div>
+
+<!-- REPL history -->
+<div id="history">
+  <div class="welcome">
+    <div class="welcome-title">SectorLISP interactive session</div>
+    <div class="welcome-body">
+      Type any expression and press <code>Enter</code> to evaluate.
+      Use <code>Shift+Enter</code> for a new line within a multi-line expression.
+      Parentheses are balanced automatically — pressing <code>Enter</code> on an
+      incomplete expression adds a newline rather than submitting.
+      All input is uppercased. <code>DEFINE</code> bindings persist across expressions.
+    </div>
+  </div>
+</div>
+
+<!-- Input -->
+<div class="input-area">
+  <div class="input-row">
+    <span class="input-prompt">*</span>
+    <textarea id="repl-input" rows="1" placeholder="(QUOTE HELLO)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+    <span class="input-hint" id="input-hint">Enter ↵</span>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-bar">
+  <div class="stat"><span class="stat-label">get</span><span class="stat-value" id="s-gets">0</span></div>
+  <div class="stat"><span class="stat-label">set</span><span class="stat-value" id="s-sets">0</span></div>
+  <div class="stat"><span class="stat-label">code</span><span class="stat-value" id="s-code">0</span></div>
+  <div class="stat"><span class="stat-label">heap</span><span class="stat-value" id="s-heap">0</span></div>
+  <div class="stat"><span class="stat-label">atom</span><span class="stat-value" id="s-atom">0</span></div>
+  <div class="stat"><span class="stat-label">ms</span><span class="stat-value" id="s-ms">0</span></div>
+  <div class="stat"><span class="stat-label">read</span><span class="stat-value" id="s-reads">0</span></div>
+  <div class="stat"><span class="stat-label">print</span><span class="stat-value" id="s-prints">0</span></div>
+</div>
+
+</div><!-- .page -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// SectorLISP friendly-branch evaluator
+// Copyright 2021 Justine Tunney — ISC License
+// Source: https://justine.lol/sectorlisp2/lisp.js
+// ============================================================
+
+var Null = 16384;
+var M;
+var ax, cx, dx;
+var kEq, kCar, kCdr, kCond, kAtom, kCons, kQuote, kDefine;
+var cGets, cSets, cReads, cPrints, cHeap;
+var code, index;
+var lispOut;
+var lispDepth, lispPanic;
+var lispFuncall;
+
+function Get(i)    { ++cGets; return M[Null + i]; }
+function Set(i, x) { ++cSets; M[Null + i] = x; }
+function Car(x) { if (x > 0) Throw(List(kCar, x)); return x ? Get(x) : +0; }
+function Cdr(x) { if (x > 0) Throw(List(kCdr, x)); return x ? Get(x + 1) : -0; }
+function Cons(car, cdr) {
+  if (cx == -Null) Throw(kCons);
+  Set(--cx, cdr); Set(--cx, car);
+  if (cx < cHeap) cHeap = cx;
+  return cx;
+}
+function Probe(h, p) { return (h + p * p) & (Null / 2 - 1); }
+function Hash(h, x) { return (((h + x) * 3083 + 3191) >> 4) & (Null / 2 - 1); }
+function Intern(x, y, h, p) {
+  if (x == Get(h) && y == Get(h + Null / 2)) return h;
+  if (Get(h)) return Intern(x, y, Probe(h, p), p + 1);
+  Set(h, x); Set(h + Null / 2, y); return h;
+}
+function Ord(s) { return s.charCodeAt(0); }
+function ReadChar() {
+  var c, t;
+  c = (index < code.length) ? code.charCodeAt(index++) : 0;
+  t = dx; dx = c; return t;
+}
+function ReadAtom() {
+  var x, y; ax = y = 0;
+  do { x = ReadChar(); } while (x <= Ord(' '));
+  if (x > Ord(')') && dx > Ord(')')) y = ReadAtom();
+  return Intern(x, y, (ax = Hash(x, ax)), 1);
+}
+function ReadList() {
+  var x, y; x = Read();
+  if (x > 0) {
+    if (Get(x) == Ord(')')) return -0;
+    if (Get(x) == Ord('.') && !Get(x + 1)) { x = Read(); y = ReadList(); if (!y) return x; else Throw(y); }
+  }
+  return Cons(x, ReadList());
+}
+function Read() { ++cReads; var t = ReadAtom(); if (Get(t) != Ord('(')) return t; return ReadList(); }
+
+function PC(c) { lispOut += String.fromCharCode(c); }
+function PrintAtom(x) { do { PC(Get(x)); } while ((x = Get(x + Null / 2))); }
+function PrintList(x) {
+  PC(Ord('('));
+  if (x < 0) {
+    Print(Car(x));
+    while ((x = Cdr(x))) {
+      if (lispPanic && cPrints > lispPanic) { PC(0x20); PC(0x2e); PC(0x2e); PC(0x2e); break; }
+      if (x < 0) { PC(Ord(' ')); Print(Car(x)); }
+      else { PC(Ord(' ')); PC(Ord('.')); PC(Ord(' ')); Print(x); break; }
+    }
+  }
+  PC(Ord(')'));
+}
+function Print(x) { ++cPrints; if (1. / x < 0) PrintList(x); else PrintAtom(x); }
+function List(x, y) { return Cons(x, Cons(y, -0)); }
+function Copy(x, m, k) { return x < m ? Cons(Copy(Car(x), m, k), Copy(Cdr(x), m, k)) + k : x; }
+function Gc(A, x) {
+  var C, B = cx;
+  x = Copy(x, A, A - B); C = cx;
+  while (C < B) Set(--A, Get(--B));
+  return (cx = A, x);
+}
+function Evcon(c, a) {
+  if (c >= 0) Throw(kCond);
+  if (Eval(Car(Car(c)), a)) return Eval(Car(Cdr(Car(c))), a);
+  return Evcon(Cdr(c), a);
+}
+function Peel(x, a) { return a && x == Car(Car(a)) ? Cdr(a) : a; }
+function Evlis(m, a) { return m ? Cons(Eval(Car(m), a), Evlis(Cdr(m), a)) : m; }
+function Pairlis(x, y, a) {
+  return x ? Cons(Cons(Car(x), Car(y)), Pairlis(Cdr(x), Cdr(y), Peel(Car(x), a))) : a;
+}
+function Assoc(x, y) { if (!y) Throw(x); return x == Car(Car(y)) ? Cdr(Car(y)) : Assoc(x, Cdr(y)); }
+function Apply(f, x, a) {
+  if (f < 0)      return Eval(Car(Cdr(Cdr(f))), Pairlis(Car(Cdr(f)), x, a));
+  if (f == kCons) return Cons(Car(x), Car(Cdr(x)));
+  if (f == kEq)   return Car(x) == Car(Cdr(x));
+  if (f == kAtom) return Car(x) >= 0;
+  if (f == kCar)  return Car(Car(x));
+  if (f == kCdr)  return Cdr(Car(x));
+  return lispFuncall(cx, f, Assoc(f, a), x, a);
+}
+function Eval(e, a) {
+  if (!e) return e;
+  if (e > 0) return Assoc(e, a);
+  if (Car(e) == kQuote) return Car(Cdr(e));
+  if (Car(e) == kCond)  return Evcon(Cdr(e), a);
+  return Apply(Car(e), Evlis(Cdr(e), a), a);
+}
+function Funcall(A, f, l, x, a) { return Gc(A, Apply(l, x, a)); }
+function Indent(n) { for (var i = 0; i < n; i++) PC(Ord(' ')); }
+function Funtrace(A, f, l, x, a) {
+  var y;
+  Indent(lispDepth); Print(f); PC(Ord(' ')); Print(x); PC(Ord('\n'));
+  lispDepth += 2;
+  y = Funcall(cx, f, l, x, a);
+  lispDepth -= 2;
+  Indent(lispDepth); Print(f); PC(Ord(' ')); Print(x);
+  PC(0x20); PC(0xe2); PC(0x86); PC(0x92); PC(0x20);
+  Print(y); PC(Ord('\n'));
+  return y;
+}
+function Throw(x) { throw x; }
+function Remove(x, y) { if (!y) return y; if (x == Car(Car(y))) return Cdr(y); return Cons(Car(y), Remove(x, Cdr(y))); }
+function Crunch(e, B) {
+  var x, y, i; if (e >= 0) return e;
+  x = Crunch(Car(e), B); y = Crunch(Cdr(e), B);
+  for (i = B - 2; i >= cx; i -= 2) { if (x == Car(i) && y == Cdr(i)) return i - B; }
+  return Cons(x, y) - B;
+}
+function Compact(x) {
+  var C, B = cx, A = 0; x = Crunch(x, B); C = cx;
+  while (C < B) Set(--A, Get(--B));
+  return (cx = A, x);
+}
+function Define(x, a) { return Compact(Cons(x, Remove(Car(x), a))); }
+function LoadBuiltins() {
+  Read(); Read();
+  kEq = Read(); kCar = Read(); kCdr = Read(); kAtom = Read();
+  kCond = Read(); kCons = Read(); kQuote = Read(); kDefine = Read();
+}
+
+// ── Session state ────────────────────────────────────────
+var lispAlist = 0;
+var traceMode = false;
+
+function Reset() {
+  lispAlist = 0; cx = 0; cHeap = 0;
+  cGets = cSets = cReads = cPrints = 0;
+  Null = 16384;
+  M = new Array(Null * 2);
+  lispFuncall = Funcall;
+  lispDepth = 0; lispPanic = 0;
+  Load('NIL T EQ CAR CDR ATOM COND CONS QUOTE DEFINE ');
+  LoadBuiltins();
+}
+
+function Load(s) { index = 0; dx = Ord(' '); code = s.toUpperCase() + '\n'; }
+
+// ── Stats ────────────────────────────────────────────────
+function updateStats(ms) {
+  var i, atomCount = 0;
+  for (i = 0; i < Null / 2; i++) { if (M[Null + i]) atomCount++; }
+  var codeCells = (-cx) >> 1;
+  var heapCells = ((-cHeap) >> 1) - codeCells;
+  if (heapCells < 0) heapCells = 0;
+  document.getElementById('s-gets').textContent   = cGets.toLocaleString();
+  document.getElementById('s-sets').textContent   = cSets.toLocaleString();
+  document.getElementById('s-code').textContent   = codeCells.toLocaleString();
+  document.getElementById('s-heap').textContent   = heapCells.toLocaleString();
+  document.getElementById('s-atom').textContent   = atomCount.toLocaleString();
+  document.getElementById('s-ms').textContent     = (Math.round(ms * 100) / 100).toString();
+  document.getElementById('s-reads').textContent  = cReads.toLocaleString();
+  document.getElementById('s-prints').textContent = cPrints.toLocaleString();
+}
+
+// ── Paren balance check ──────────────────────────────────
+// Returns true if the input string has balanced (complete) parens,
+// meaning it is ready to submit on Enter.
+function isComplete(src) {
+  var depth = 0;
+  var hasContent = false;
+  for (var i = 0; i < src.length; i++) {
+    var c = src[i];
+    if (c === '(') { depth++; hasContent = true; }
+    else if (c === ')') { depth--; if (depth < 0) return true; /* malformed, submit anyway */ }
+    else if (c > ' ') hasContent = true;
+  }
+  if (!hasContent) return false;
+  return depth <= 0;
+}
+
+// ── Evaluate one expression string ──────────────────────
+// Returns { type: 'value'|'define'|'error'|'trace', text, name? }
+function evalOne(src) {
+  cGets = cSets = cReads = cPrints = 0;
+  cHeap = cx;
+  lispDepth = 0;
+  lispPanic = traceMode ? 8000 : 0;
+  lispFuncall = traceMode ? Funtrace : Funcall;
+
+  Load(src);
+  var results = [];
+  var t0 = performance.now();
+
+  while (dx) {
+    if (dx <= Ord(' ')) { ReadChar(); continue; }
+    var A = cx;
+    lispOut = '';
+    var isDefine = false;
+    var defineName = '';
+    try {
+      var x = Read();
+      if (x < 0 && Car(x) == kDefine) {
+        // Extract name for display before defining
+        var nameAtom = Car(Cdr(x));
+        lispOut = '';
+        try { Print(nameAtom); } catch(e2) {}
+        defineName = lispOut;
+        lispAlist = Define(Cdr(x), lispAlist);
+        // No Gc after Define
+        results.push({ type: 'define', name: defineName });
+        continue;
+      }
+      x = Eval(x, lispAlist);
+      lispOut = '';
+      Print(x);
+      if (traceMode) {
+        // trace output is already in lispOut (Funtrace writes there);
+        // the final Print above adds the result — split them
+        var parts = lispOut;
+        results.push({ type: 'trace', text: parts });
+      } else {
+        results.push({ type: 'value', text: lispOut });
+      }
+    } catch (z) {
+      lispOut = '';
+      try { Print(z); } catch (e2) {}
+      results.push({ type: 'error', text: '? ' + lispOut });
+    }
+    Gc(A, 0);
+  }
+
+  var ms = performance.now() - t0;
+  updateStats(ms);
+  return results;
+}
+
+// ── DOM helpers ──────────────────────────────────────────
+function appendExchange(inputText, results) {
+  var hist = document.getElementById('history');
+
+  var ex = document.createElement('div');
+  ex.className = 'exchange';
+
+  // Input line
+  var inRow = document.createElement('div');
+  inRow.className = 'exchange-input';
+  var mark = document.createElement('span');
+  mark.className = 'prompt-mark';
+  mark.textContent = '*';
+  var expr = document.createElement('span');
+  expr.className = 'exchange-expr';
+  expr.textContent = inputText.toUpperCase().trim();
+  inRow.appendChild(mark);
+  inRow.appendChild(expr);
+  ex.appendChild(inRow);
+
+  // Output(s)
+  if (results.length > 0) {
+    var outDiv = document.createElement('div');
+    outDiv.className = 'exchange-output';
+    results.forEach(function (r) {
+      var line = document.createElement('div');
+      if (r.type === 'define') {
+        line.className = 'output-define';
+        line.textContent = '\u00b7 ' + r.name + ' defined';
+      } else if (r.type === 'error') {
+        line.className = 'output-error';
+        line.textContent = r.text;
+      } else if (r.type === 'trace') {
+        line.className = 'output-trace';
+        line.textContent = r.text;
+      } else {
+        line.className = 'output-value';
+        line.textContent = r.text;
+      }
+      outDiv.appendChild(line);
+    });
+    ex.appendChild(outDiv);
+  }
+
+  hist.appendChild(ex);
+  hist.scrollTop = hist.scrollHeight;
+}
+
+// ── Submit ───────────────────────────────────────────────
+function submit() {
+  var inp = document.getElementById('repl-input');
+  var src = inp.value;
+  if (!src.trim()) return;
+  var results = evalOne(src);
+  appendExchange(src, results);
+  inp.value = '';
+  inp.style.height = 'auto';
+  updateHint(inp);
+  inp.focus();
+}
+
+// ── Input auto-resize + hint ─────────────────────────────
+function updateHint(ta) {
+  var src = ta.value;
+  var hint = document.getElementById('input-hint');
+  if (!src.trim()) { hint.textContent = 'Enter \u21b5'; return; }
+  if (isComplete(src)) {
+    hint.textContent = 'Enter \u21b5';
+  } else {
+    var depth = 0;
+    for (var i = 0; i < src.length; i++) {
+      if (src[i] === '(') depth++;
+      else if (src[i] === ')') depth--;
+    }
+    hint.textContent = depth > 0 ? 'depth ' + depth : 'Enter \u21b5';
+  }
+}
+
+document.getElementById('repl-input').addEventListener('input', function () {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 160) + 'px';
+  updateHint(this);
+});
+
+document.getElementById('repl-input').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') {
+    if (e.shiftKey) {
+      // Shift+Enter: always insert newline
+      return;
+    }
+    var src = this.value;
+    if (isComplete(src)) {
+      e.preventDefault();
+      submit();
+    }
+    // else: let Enter insert newline naturally
+  }
+});
+
+// ── Toolbar actions ──────────────────────────────────────
+function toggleTrace() {
+  traceMode = !traceMode;
+  var btn = document.getElementById('btn-trace');
+  btn.classList.toggle('active', traceMode);
+}
+
+function onReset() {
+  Reset();
+  var hist = document.getElementById('history');
+  // Remove all exchanges but keep the welcome message
+  var nodes = hist.querySelectorAll('.exchange');
+  nodes.forEach(function (n) { n.remove(); });
+  // Add a reset marker
+  var marker = document.createElement('div');
+  marker.style.cssText = 'max-width:680px;margin:0 auto 20px;font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.04em;font-style:italic;';
+  marker.textContent = '— session reset —';
+  hist.appendChild(marker);
+  hist.scrollTop = hist.scrollHeight;
+  updateStats(0);
+  showToast('Session reset');
+}
+
+function onClear() {
+  var hist = document.getElementById('history');
+  var nodes = hist.querySelectorAll('.exchange');
+  nodes.forEach(function (n) { n.remove(); });
+  document.getElementById('repl-input').focus();
+}
+
+function onShare() {
+  // Serialise current alist as a sequence of DEFINEs
+  var defines = [];
+  var a = lispAlist;
+  while (a) {
+    lispOut = '';
+    try {
+      Print(Car(Car(a)));
+      var name = lispOut;
+      lispOut = '';
+      Print(Cdr(Car(a)));
+      var val = lispOut;
+      defines.unshift('(DEFINE ' + name + ' . ' + val + ')');
+    } catch (e) {}
+    a = Cdr(a);
+  }
+  var src = defines.join('\n');
+  var encoded = src ? btoa(unescape(encodeURIComponent(src))) : '';
+  var url = location.href.split('#')[0] + (encoded ? '#' + encoded : '');
+  try {
+    navigator.clipboard.writeText(url).then(function () {
+      showToast('Session link copied');
+    }, function () { prompt('Copy this link:', url); });
+  } catch (e) { prompt('Copy this link:', url); }
+}
+
+function toggleDropdown() {
+  document.getElementById('dropdown-menu').classList.toggle('open');
+}
+
+document.addEventListener('click', function (e) {
+  var dd = document.getElementById('load-dd');
+  if (!dd.contains(e.target)) {
+    document.getElementById('dropdown-menu').classList.remove('open');
+  }
+});
+
+function loadEx(name) {
+  document.getElementById('dropdown-menu').classList.remove('open');
+  var lines = (EXAMPLES[name] || '').trim().split('\n');
+  var inp = document.getElementById('repl-input');
+  // Load each non-empty line as a separate evaluation
+  var batch = EXAMPLES[name] || '';
+  inp.value = batch.trim();
+  inp.style.height = 'auto';
+  inp.style.height = Math.min(inp.scrollHeight, 160) + 'px';
+  updateHint(inp);
+  inp.focus();
+  inp.setSelectionRange(inp.value.length, inp.value.length);
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function () { t.classList.remove('show'); }, 2200);
+}
+
+function loadFromHash() {
+  var hash = location.hash.slice(1);
+  if (!hash) return;
+  try {
+    var src = decodeURIComponent(escape(atob(hash)));
+    if (src.trim()) {
+      var results = evalOne(src);
+      // Show defines silently, just update state — don't clutter history
+      var defineCount = results.filter(function (r) { return r.type === 'define'; }).length;
+      if (defineCount > 0) {
+        var marker = document.createElement('div');
+        var hist = document.getElementById('history');
+        marker.style.cssText = 'max-width:680px;margin:0 auto 20px;font-family:var(--mono);font-size:11px;color:var(--ink-3);font-style:italic;';
+        marker.textContent = '— ' + defineCount + ' definition' + (defineCount === 1 ? '' : 's') + ' restored from link —';
+        hist.appendChild(marker);
+      }
+    }
+  } catch (e) {}
+}
+
+// ── Examples ─────────────────────────────────────────────
+var EXAMPLES = {};
+
+EXAMPLES['atoms'] = `(QUOTE HELLO)
+(ATOM (QUOTE HELLO))
+(ATOM (QUOTE (A B)))
+(EQ (QUOTE A) (QUOTE A))
+(EQ (QUOTE A) (QUOTE B))
+(CAR (QUOTE (A B C)))
+(CDR (QUOTE (A B C)))
+(CONS (QUOTE A) (QUOTE (B C)))`;
+
+EXAMPLES['ff'] = `(DEFINE FF .
+  (LAMBDA (X)
+    (COND ((ATOM X) X)
+          ((QUOTE T) (FF (CAR X))))))
+
+(FF (QUOTE ((A) B C)))
+(FF (QUOTE (((DEEP) INSIDE) THE TREE)))`;
+
+EXAMPLES['logic'] = `(DEFINE T . T)
+(DEFINE NOT . (LAMBDA (X) (COND (X NIL) (T T))))
+(DEFINE AND . (LAMBDA (X Y) (COND (X Y) (T NIL))))
+(DEFINE OR  . (LAMBDA (X Y) (COND (X T) (T Y))))
+
+(NOT NIL)
+(NOT T)
+(AND T T)
+(AND T NIL)
+(OR NIL T)`;
+
+EXAMPLES['reverse'] = `(DEFINE T . T)
+(DEFINE REVERSE .
+  (LAMBDA (X Y)
+    (COND (X (REVERSE (CDR X)
+                      (CONS (CAR X) Y)))
+          (T Y))))
+
+(REVERSE (QUOTE (A B C D)) ())`;
+
+EXAMPLES['equal'] = `(DEFINE T . T)
+(DEFINE EQUAL .
+  (LAMBDA (X Y)
+    (COND ((ATOM X)
+           (COND ((ATOM Y) (EQ X Y))
+                 (T NIL)))
+          ((ATOM Y) NIL)
+          ((EQUAL (CAR X) (CAR Y))
+           (EQUAL (CDR X) (CDR Y)))
+          (T NIL))))
+
+(EQUAL (QUOTE (A B C)) (QUOTE (A B C)))
+(EQUAL (QUOTE (A B C)) (QUOTE (A B D)))`;
+
+EXAMPLES['assoc'] = `(DEFINE T . T)
+(DEFINE ASSOC .
+  (LAMBDA (KEY ALIST)
+    (COND ((ATOM ALIST) NIL)
+          ((EQ KEY (CAR (CAR ALIST)))
+           (CDR (CAR ALIST)))
+          (T (ASSOC KEY (CDR ALIST))))))
+
+(DEFINE ENV .
+  (QUOTE ((X . HELLO)
+          (Y . WORLD)
+          (Z . LISP))))
+
+(ASSOC (QUOTE X) ENV)
+(ASSOC (QUOTE Z) ENV)`;
+
+EXAMPLES['arith'] = `(DEFINE T . T)
+(DEFINE NOT  . (LAMBDA (X) (COND (X NIL) (T T))))
+(DEFINE OR   . (LAMBDA (X Y) (COND (X T) (T Y))))
+(DEFINE AND  . (LAMBDA (X Y) (COND (X Y) (T NIL))))
+(DEFINE XOR  . (LAMBDA (X Y) (COND (X (NOT Y)) (T Y))))
+(DEFINE HEAD . (LAMBDA (X) (COND (X (CAR X)) (T NIL))))
+(DEFINE TAIL . (LAMBDA (X) (COND (X (CDR X)) (T ()))))
+(DEFINE ADD  .
+  (LAMBDA (A B C)
+    (COND ((OR A B)
+           (CONS (XOR (XOR (HEAD A) (HEAD B)) C)
+                 (ADD (TAIL A) (TAIL B)
+                      (OR (AND (XOR (HEAD A) (HEAD B)) C)
+                          (AND (HEAD A) (HEAD B))))))
+          (C (CONS C ()))
+          (T ()))))
+(DEFINE + . (LAMBDA (A B) (ADD A B NIL)))
+(DEFINE EQUAL .
+  (LAMBDA (X Y)
+    (COND ((ATOM X) (COND ((ATOM Y) (EQ X Y)) (T NIL)))
+          ((ATOM Y) NIL)
+          ((EQUAL (CAR X) (CAR Y)) (EQUAL (CDR X) (CDR Y)))
+          (T NIL))))
+
+(EQUAL (+ (QUOTE (T)) (QUOTE (T))) (QUOTE (NIL T)))
+(EQUAL (+ (QUOTE (NIL T NIL T)) (QUOTE (NIL T NIL T))) (QUOTE (NIL NIL T NIL T)))`;
+
+EXAMPLES['diff'] = `(DEFINE T . T)
+(DEFINE EQUAL .
+  (LAMBDA (X Y)
+    (COND ((ATOM X) (COND ((ATOM Y) (EQ X Y)) (T NIL)))
+          ((ATOM Y) NIL)
+          ((EQUAL (CAR X) (CAR Y)) (EQUAL (CDR X) (CDR Y)))
+          (T NIL))))
+(DEFINE 0 . 0) (DEFINE 1 . 1)
+(DEFINE ADD . ADD) (DEFINE SUB . SUB)
+(DEFINE MUL . MUL) (DEFINE POW . POW) (DEFINE LOG . LOG)
+(DEFINE L2 . (LAMBDA (X Y) (CONS X (CONS Y ()))))
+(DEFINE L3 . (LAMBDA (X Y Z) (CONS X (L2 Y Z))))
+(DEFINE DIFF .
+  (LAMBDA (E WRT)
+    (COND ((EQ E WRT) 1)
+          ((ATOM E) 0)
+          ((QUOTE T)
+           (DIFF3 (CAR E) (CAR (CDR E))
+                  (COND ((CDR (CDR E)) (CAR (CDR (CDR E))))
+                        ((QUOTE T) NIL)))))))
+(DEFINE DIFF3 .
+  (LAMBDA (OP X Y)
+    (COND ((EQ OP ADD) (L3 OP (DIFF X WRT) (DIFF Y WRT)))
+          ((EQ OP SUB) (L3 OP (DIFF X WRT) (DIFF Y WRT)))
+          ((EQ OP MUL) (L3 ADD (L3 MUL X (DIFF Y WRT)) (L3 MUL (DIFF X WRT) Y)))
+          ((EQ OP POW)
+           (L3 ADD (L3 MUL (L3 POW X Y) (L3 MUL (L2 LOG X) (DIFF Y WRT)))
+                   (L3 MUL Y (L3 MUL (L3 POW X (L3 SUB Y 1)) (DIFF X WRT)))))
+          ((EQ OP (QUOTE SIN)) (L3 MUL (DIFF X WRT) (L2 (QUOTE COS) X)))
+          ((EQ OP (QUOTE COS)) (L3 SUB 0 (L3 MUL (DIFF X WRT) (L2 (QUOTE SIN) X))))
+          ((QUOTE T) (QUOTE HOW)))))
+
+(EQUAL 1 (DIFF (QUOTE X) (QUOTE X)))
+(EQUAL (QUOTE (ADD 1 1)) (DIFF (QUOTE (ADD X X)) (QUOTE X)))
+(EQUAL (QUOTE (COS X)) (DIFF (QUOTE (SIN X)) (QUOTE X)))`;
+
+EXAMPLES['microshaft'] = `(DEFINE T . T)
+(DEFINE APPEND . (LAMBDA (X Y) (COND ((ATOM X) Y) (T (CONS (CAR X) (APPEND (CDR X) Y))))))
+(DEFINE EQUAL . (LAMBDA (X Y) (COND ((ATOM X) (COND ((ATOM Y) (EQ X Y)) (T NIL))) ((ATOM Y) NIL) ((EQUAL (CAR X) (CAR Y)) (EQUAL (CDR X) (CDR Y))) (T NIL))))
+(DEFINE VARIABLEP . (LAMBDA (X) (COND ((ATOM X) NIL) ((EQ (CAR X) (QUOTE ?)) T) (T NIL))))
+(DEFINE LOOKUP . (LAMBDA (VAR BINDS) (COND ((ATOM BINDS) NIL) ((EQUAL (CAR (CAR BINDS)) VAR) (CAR BINDS)) (T (LOOKUP VAR (CDR BINDS))))))
+(DEFINE MATCH . (LAMBDA (PAT DAT BINDS) (COND ((EQ BINDS (QUOTE FAIL)) (QUOTE FAIL)) ((ATOM PAT) (COND ((ATOM DAT) (COND ((EQ PAT DAT) BINDS) (T (QUOTE FAIL)))) (T (QUOTE FAIL)))) ((VARIABLEP PAT) ((LAMBDA (B) (COND (B (MATCH (CDR B) DAT BINDS)) (T (CONS (CONS PAT DAT) BINDS)))) (LOOKUP PAT BINDS))) ((ATOM DAT) (QUOTE FAIL)) (T (MATCH (CDR PAT) (CDR DAT) (MATCH (CAR PAT) (CAR DAT) BINDS))))))
+(DEFINE SUBS . (LAMBDA (TMPL BINDS) (COND ((ATOM TMPL) TMPL) ((VARIABLEP TMPL) ((LAMBDA (B) (COND (B (CDR B)) (T TMPL))) (LOOKUP TMPL BINDS))) (T (CONS (SUBS (CAR TMPL) BINDS) (SUBS (CDR TMPL) BINDS))))))
+(DEFINE MAP-SUBS . (LAMBDA (BIND-LIST TMPL) (COND ((ATOM BIND-LIST) NIL) (T (CONS (SUBS TMPL (CAR BIND-LIST)) (MAP-SUBS (CDR BIND-LIST) TMPL))))))
+(DEFINE QUERY-SIMPLE . (LAMBDA (PAT BINDS DB) (COND ((ATOM DB) NIL) (T ((LAMBDA (B REST) (COND ((EQ B (QUOTE FAIL)) REST) (T (CONS B REST)))) (MATCH PAT (CAR DB) BINDS) (QUERY-SIMPLE PAT BINDS (CDR DB)))))))
+(DEFINE MAPQUERY . (LAMBDA (EXPR BIND-LIST DB) (COND ((ATOM BIND-LIST) NIL) (T (APPEND (QUERY EXPR (CAR BIND-LIST) DB) (MAPQUERY EXPR (CDR BIND-LIST) DB))))))
+(DEFINE QUERY-AND . (LAMBDA (CONJUNCTS BIND-LIST DB) (COND ((ATOM CONJUNCTS) BIND-LIST) (T (QUERY-AND (CDR CONJUNCTS) (MAPQUERY (CAR CONJUNCTS) BIND-LIST DB) DB)))))
+(DEFINE QUERY-OR . (LAMBDA (DISJUNCTS BINDS DB) (COND ((ATOM DISJUNCTS) NIL) (T (APPEND (QUERY (CAR DISJUNCTS) BINDS DB) (QUERY-OR (CDR DISJUNCTS) BINDS DB))))))
+(DEFINE QUERY-NOT . (LAMBDA (EXPR BINDS DB) (COND ((QUERY EXPR BINDS DB) NIL) (T (CONS BINDS NIL)))))
+(DEFINE QUERY . (LAMBDA (EXPR BINDS DB) (COND ((EQ (CAR EXPR) (QUOTE AND)) (QUERY-AND (CDR EXPR) (CONS BINDS NIL) DB)) ((EQ (CAR EXPR) (QUOTE OR)) (QUERY-OR (CDR EXPR) BINDS DB)) ((EQ (CAR EXPR) (QUOTE NOT)) (QUERY-NOT (CAR (CDR EXPR)) BINDS DB)) (T (QUERY-SIMPLE EXPR BINDS DB)))))
+(DEFINE ANSWER . (LAMBDA (EXPR TMPL DB) (MAP-SUBS (QUERY EXPR NIL DB) TMPL)))
+(DEFINE MICROSHAFT-DB . (LAMBDA () (QUOTE (
+  (TRIPLE BITDIDDLE-BEN NAME (BITDIDDLE BEN)) (TRIPLE BITDIDDLE-BEN JOB (COMPUTER WIZARD)) (TRIPLE BITDIDDLE-BEN SALARY 60000) (TRIPLE BITDIDDLE-BEN ADDRESS (SLUMERVILLE (RIDGE ROAD) 10)) (TRIPLE BITDIDDLE-BEN SUPERVISOR WARBUCKS-OLIVER)
+  (TRIPLE HACKER-ALYSSA NAME (HACKER ALYSSA P)) (TRIPLE HACKER-ALYSSA JOB (COMPUTER PROGRAMMER)) (TRIPLE HACKER-ALYSSA SALARY 40000) (TRIPLE HACKER-ALYSSA ADDRESS (CAMBRIDGE (MASS AVE) 78)) (TRIPLE HACKER-ALYSSA SUPERVISOR BITDIDDLE-BEN)
+  (TRIPLE FECT-CY NAME (FECT CY D)) (TRIPLE FECT-CY JOB (COMPUTER PROGRAMMER)) (TRIPLE FECT-CY SALARY 35000) (TRIPLE FECT-CY ADDRESS (CAMBRIDGE (AMES STREET) 3)) (TRIPLE FECT-CY SUPERVISOR BITDIDDLE-BEN)
+  (TRIPLE TWEAKIT-LEM NAME (TWEAKIT LEM E)) (TRIPLE TWEAKIT-LEM JOB (COMPUTER TECHNICIAN)) (TRIPLE TWEAKIT-LEM SALARY 25000) (TRIPLE TWEAKIT-LEM ADDRESS (BOSTON (BAY STATE ROAD) 22)) (TRIPLE TWEAKIT-LEM SUPERVISOR BITDIDDLE-BEN)
+  (TRIPLE REASONER-LOUIS NAME (REASONER LOUIS)) (TRIPLE REASONER-LOUIS JOB (COMPUTER PROGRAMMER TRAINEE)) (TRIPLE REASONER-LOUIS SALARY 30000) (TRIPLE REASONER-LOUIS ADDRESS (SLUMERVILLE (PINE TREE ROAD) 80)) (TRIPLE REASONER-LOUIS SUPERVISOR HACKER-ALYSSA)
+  (TRIPLE WARBUCKS-OLIVER NAME (WARBUCKS OLIVER)) (TRIPLE WARBUCKS-OLIVER JOB (ADMINISTRATION BIG WHEEL)) (TRIPLE WARBUCKS-OLIVER SALARY 150000) (TRIPLE WARBUCKS-OLIVER ADDRESS (SWELLESLEY (TOP HEAP ROAD)))
+  (TRIPLE SCROOGE-EBEN NAME (SCROOGE EBEN)) (TRIPLE SCROOGE-EBEN JOB (ACCOUNTING CHIEF ACCOUNTANT)) (TRIPLE SCROOGE-EBEN SALARY 75000) (TRIPLE SCROOGE-EBEN ADDRESS (WESTON (SHADY LANE) 10)) (TRIPLE SCROOGE-EBEN SUPERVISOR WARBUCKS-OLIVER)
+  (TRIPLE CRATCHET-ROBERT NAME (CRATCHET ROBERT)) (TRIPLE CRATCHET-ROBERT JOB (ACCOUNTING SCRIVENER)) (TRIPLE CRATCHET-ROBERT SALARY 18000) (TRIPLE CRATCHET-ROBERT ADDRESS (ALLSTON (N HARVARD STREET) 16)) (TRIPLE CRATCHET-ROBERT SUPERVISOR SCROOGE-EBEN)
+  (TRIPLE AULL-DEWITT NAME (AULL DEWITT)) (TRIPLE AULL-DEWITT JOB (ADMINISTRATION SECRETARY)) (TRIPLE AULL-DEWITT SALARY 25000) (TRIPLE AULL-DEWITT ADDRESS (SLUMERVILLE (ONION SQUARE) 5)) (TRIPLE AULL-DEWITT SUPERVISOR WARBUCKS-OLIVER)
+  (TRIPLE (COMPUTER WIZARD) CAN-DO-JOB (COMPUTER PROGRAMMER)) (TRIPLE (COMPUTER WIZARD) CAN-DO-JOB (COMPUTER TECHNICIAN))
+  (TRIPLE (COMPUTER PROGRAMMER) CAN-DO-JOB (COMPUTER PROGRAMMER TRAINEE))
+  (TRIPLE (ADMINISTRATION SECRETARY) CAN-DO-JOB (ADMINISTRATION BIG WHEEL))
+))))`;
+
+EXAMPLES['queries'] = `(ANSWER (QUOTE (TRIPLE (? P) JOB (COMPUTER PROGRAMMER))) (QUOTE (? P)) (MICROSHAFT-DB))
+
+(ANSWER (QUOTE (AND (TRIPLE (? P) SUPERVISOR BITDIDDLE-BEN) (TRIPLE (? P) JOB (? J)))) (QUOTE ((? P) HAS-JOB (? J))) (MICROSHAFT-DB))
+
+(ANSWER (QUOTE (AND (TRIPLE (? P) SUPERVISOR (? MID)) (TRIPLE (? MID) SUPERVISOR WARBUCKS-OLIVER))) (QUOTE ((? P) UNDER (? MID))) (MICROSHAFT-DB))
+
+(ANSWER (QUOTE (NOT (TRIPLE (? P) SUPERVISOR BITDIDDLE-BEN))) (QUOTE (? P)) (MICROSHAFT-DB))
+
+(ANSWER (QUOTE (TRIPLE (? P) ADDRESS (SLUMERVILLE . (? REST)))) (QUOTE ((? P) LIVES-IN SLUMERVILLE)) (MICROSHAFT-DB))`;
+
+// ── Boot ─────────────────────────────────────────────────
+Reset();
+loadFromHash();
+document.getElementById('repl-input').focus();
+</script>
+</body>
+</html>
