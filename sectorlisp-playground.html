@@ -504,6 +504,10 @@
             Microshaft personnel database
             <span class="dropdown-item-sub">Full query engine + Microshaft DB + 10 queries</span>
           </button>
+          <button class="dropdown-item" onclick="loadExample('entities')">
+            Entity views — triples ↔ entities
+            <span class="dropdown-item-sub">Group triples by subject; expand back to triples</span>
+          </button>
         </div>
       </div>
     </div>
@@ -1430,6 +1434,85 @@ EXAMPLES['microshaft'] = `(DEFINE COMMENT . (QUOTE SPO-TRIPLE-STORE-QUERY-ENGINE
               (TRIPLE (? P) NAME (? PNAME))))
   (QUOTE ((? PNAME) REPORTS-TO (? BNAME)))
   (MICROSHAFT-DB))`;
+
+EXAMPLES['entities'] = `(DEFINE COMMENT . (QUOTE ENTITY-CONVERSION-GROUP-TRIPLES-BY-SUBJECT))
+
+(DEFINE T . T)
+
+(DEFINE EQUAL . (LAMBDA (X Y)
+  (COND ((ATOM X)
+         (COND ((ATOM Y) (EQ X Y))
+               (T NIL)))
+        ((ATOM Y) NIL)
+        ((EQUAL (CAR X) (CAR Y)) (EQUAL (CDR X) (CDR Y)))
+        (T NIL))))
+
+(DEFINE APPEND . (LAMBDA (X Y)
+  (COND ((ATOM X) Y)
+        (T (CONS (CAR X) (APPEND (CDR X) Y))))))
+
+(DEFINE MEMBER-EQUAL . (LAMBDA (X LST)
+  (COND ((ATOM LST) NIL)
+        ((EQUAL X (CAR LST)) T)
+        (T (MEMBER-EQUAL X (CDR LST))))))
+
+(DEFINE UNIQUE-SUBJECTS . (LAMBDA (DB)
+  (COND ((ATOM DB) NIL)
+        (T ((LAMBDA (S REST)
+              (COND ((MEMBER-EQUAL S REST) REST)
+                    (T (CONS S REST))))
+             (CAR (CDR (CAR DB)))
+             (UNIQUE-SUBJECTS (CDR DB)))))))
+
+(DEFINE PO-PAIRS-FOR . (LAMBDA (SUBJ DB)
+  (COND ((ATOM DB) NIL)
+        ((EQUAL SUBJ (CAR (CDR (CAR DB))))
+         (CONS (CONS (CAR (CDR (CDR (CAR DB))))
+                     (CONS (CAR (CDR (CDR (CDR (CAR DB))))) NIL))
+               (PO-PAIRS-FOR SUBJ (CDR DB))))
+        (T (PO-PAIRS-FOR SUBJ (CDR DB))))))
+
+(DEFINE BUILD-ENTITY-LIST . (LAMBDA (SUBJS DB)
+  (COND ((ATOM SUBJS) NIL)
+        (T (CONS (CONS (QUOTE ENTITY)
+                       (CONS (CAR SUBJS) (PO-PAIRS-FOR (CAR SUBJS) DB)))
+                 (BUILD-ENTITY-LIST (CDR SUBJS) DB))))))
+
+(DEFINE TRIPLES-TO-ENTITIES . (LAMBDA (DB)
+  (BUILD-ENTITY-LIST (UNIQUE-SUBJECTS DB) DB)))
+
+(DEFINE EXPAND-PO . (LAMBDA (SUBJ PO-PAIRS)
+  (COND ((ATOM PO-PAIRS) NIL)
+        (T (CONS (CONS (QUOTE TRIPLE)
+                       (CONS SUBJ (CAR PO-PAIRS)))
+                 (EXPAND-PO SUBJ (CDR PO-PAIRS)))))))
+
+(DEFINE ENTITIES-TO-TRIPLES . (LAMBDA (ENTITIES)
+  (COND ((ATOM ENTITIES) NIL)
+        (T (APPEND (EXPAND-PO (CAR (CDR (CAR ENTITIES)))
+                              (CDR (CDR (CAR ENTITIES))))
+                   (ENTITIES-TO-TRIPLES (CDR ENTITIES)))))))
+
+(DEFINE COMMENT . (QUOTE SAMPLE-DATABASE))
+
+(DEFINE SAMPLE-DB . (LAMBDA ()
+  (QUOTE (
+    (TRIPLE ALICE JOB        ENGINEER)
+    (TRIPLE ALICE DEPT       COMPUTING)
+    (TRIPLE BOB   JOB        MANAGER)
+    (TRIPLE BOB   DEPT       COMPUTING)
+    (TRIPLE BOB   REPORTS-TO CAROL)
+    (TRIPLE CAROL JOB        DIRECTOR)
+  ))))
+
+(DEFINE COMMENT . (QUOTE CONVERT-TRIPLES-TO-ENTITIES))
+(TRIPLES-TO-ENTITIES (SAMPLE-DB))
+
+(DEFINE COMMENT . (QUOTE EXPAND-ENTITIES-BACK-TO-TRIPLES))
+(ENTITIES-TO-TRIPLES (TRIPLES-TO-ENTITIES (SAMPLE-DB)))
+
+(DEFINE COMMENT . (QUOTE ROUND-TRIP-EQUAL-CHECK))
+(EQUAL (SAMPLE-DB) (ENTITIES-TO-TRIPLES (TRIPLES-TO-ENTITIES (SAMPLE-DB))))`;
 
 // ── Boot ─────────────────────────────────────────────────────
 Reset();
