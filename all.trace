@@ -1,0 +1,171 @@
+EVAL(((LAMBDA (FF X) (FF X)) (LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (QUOTE ((A) B C))) NIL)
+  EVLIS(((LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (QUOTE ((A) B C))) NIL)
+    EVAL((LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) NIL)
+    EVAL((LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) NIL) → (LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X)))))
+    EVLIS(((QUOTE ((A) B C))) NIL)
+      EVAL((QUOTE ((A) B C)) NIL)
+      EVAL((QUOTE ((A) B C)) NIL) → ((A) B C)
+      EVLIS(() NIL)
+      EVLIS(() NIL) → ()
+    EVLIS(((QUOTE ((A) B C))) NIL) → (((A) B C))
+  EVLIS(((LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (QUOTE ((A) B C))) NIL) → ((LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) ((A) B C))
+  APPLY((LAMBDA (FF X) (FF X)) ((LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) ((A) B C)) NIL)
+    PAIRLIS((FF X) ((LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) ((A) B C)) NIL)
+      PAIRLIS((X) (((A) B C)) NIL)
+        PAIRLIS(() () NIL)
+        PAIRLIS(() () NIL) → NIL
+      PAIRLIS((X) (((A) B C)) NIL) → ((X (A) B C))
+    PAIRLIS((FF X) ((LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) ((A) B C)) NIL) → ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))
+    EVAL((FF X) ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+      EVLIS((X) ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+        EVAL(X ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+          ASSOC(X ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+            ASSOC(X ((X (A) B C)))
+            ASSOC(X ((X (A) B C))) → ((A) B C)
+          ASSOC(X ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ((A) B C)
+        EVAL(X ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ((A) B C)
+        EVLIS(() ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+        EVLIS(() ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ()
+      EVLIS((X) ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → (((A) B C))
+      APPLY(FF (((A) B C)) ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+        EVAL(FF ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+          ASSOC(FF ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+          ASSOC(FF ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → (LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X)))))
+        EVAL(FF ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → (LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X)))))
+        APPLY((LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (((A) B C)) ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+          PAIRLIS((X) (((A) B C)) ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+            PAIRLIS(() () ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+            PAIRLIS(() () ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))
+          PAIRLIS((X) (((A) B C)) ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))
+          EVAL((COND ((ATOM X) X) (T (FF (CAR X)))) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+            EVCON((((ATOM X) X) (T (FF (CAR X)))) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+              EVAL((ATOM X) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                EVLIS((X) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                  EVAL(X ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                    ASSOC(X ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                    ASSOC(X ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ((A) B C)
+                  EVAL(X ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ((A) B C)
+                  EVLIS(() ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                  EVLIS(() ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ()
+                EVLIS((X) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → (((A) B C))
+                APPLY(ATOM (((A) B C)) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                APPLY(ATOM (((A) B C)) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → NIL
+              EVAL((ATOM X) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → NIL
+              EVCON(((T (FF (CAR X)))) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                EVAL(T ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                EVAL(T ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → T
+                EVAL((FF (CAR X)) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                  EVLIS(((CAR X)) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                    EVAL((CAR X) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                      EVLIS((X) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                        EVAL(X ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                          ASSOC(X ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                          ASSOC(X ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ((A) B C)
+                        EVAL(X ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ((A) B C)
+                        EVLIS(() ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                        EVLIS(() ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ()
+                      EVLIS((X) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → (((A) B C))
+                      APPLY(CAR (((A) B C)) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                      APPLY(CAR (((A) B C)) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → (A)
+                    EVAL((CAR X) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → (A)
+                    EVLIS(() ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                    EVLIS(() ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ()
+                  EVLIS(((CAR X)) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ((A))
+                  APPLY(FF ((A)) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                    EVAL(FF ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                      ASSOC(FF ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                        ASSOC(FF ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                        ASSOC(FF ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → (LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X)))))
+                      ASSOC(FF ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → (LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X)))))
+                    EVAL(FF ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → (LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X)))))
+                    APPLY((LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) ((A)) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                      PAIRLIS((X) ((A)) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                        PAIRLIS(() () ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                        PAIRLIS(() () ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))
+                      PAIRLIS((X) ((A)) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))
+                      EVAL((COND ((ATOM X) X) (T (FF (CAR X)))) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                        EVCON((((ATOM X) X) (T (FF (CAR X)))) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                          EVAL((ATOM X) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                            EVLIS((X) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                              EVAL(X ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                ASSOC(X ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                ASSOC(X ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → (A)
+                              EVAL(X ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → (A)
+                              EVLIS(() ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                              EVLIS(() ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ()
+                            EVLIS((X) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ((A))
+                            APPLY(ATOM ((A)) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                            APPLY(ATOM ((A)) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → NIL
+                          EVAL((ATOM X) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → NIL
+                          EVCON(((T (FF (CAR X)))) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                            EVAL(T ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                            EVAL(T ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → T
+                            EVAL((FF (CAR X)) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                              EVLIS(((CAR X)) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                EVAL((CAR X) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                  EVLIS((X) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                    EVAL(X ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                      ASSOC(X ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                      ASSOC(X ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → (A)
+                                    EVAL(X ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → (A)
+                                    EVLIS(() ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                    EVLIS(() ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ()
+                                  EVLIS((X) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ((A))
+                                  APPLY(CAR ((A)) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                  APPLY(CAR ((A)) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+                                EVAL((CAR X) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+                                EVLIS(() ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                EVLIS(() ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ()
+                              EVLIS(((CAR X)) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → (A)
+                              APPLY(FF (A) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                EVAL(FF ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                  ASSOC(FF ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                    ASSOC(FF ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                      ASSOC(FF ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                      ASSOC(FF ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → (LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X)))))
+                                    ASSOC(FF ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → (LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X)))))
+                                  ASSOC(FF ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → (LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X)))))
+                                EVAL(FF ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → (LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X)))))
+                                APPLY((LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (A) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                  PAIRLIS((X) (A) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                    PAIRLIS(() () ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                    PAIRLIS(() () ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))
+                                  PAIRLIS((X) (A) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ((X . A) (X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))
+                                  EVAL((COND ((ATOM X) X) (T (FF (CAR X)))) ((X . A) (X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                    EVCON((((ATOM X) X) (T (FF (CAR X)))) ((X . A) (X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                      EVAL((ATOM X) ((X . A) (X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                        EVLIS((X) ((X . A) (X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                          EVAL(X ((X . A) (X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                            ASSOC(X ((X . A) (X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                            ASSOC(X ((X . A) (X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+                                          EVAL(X ((X . A) (X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+                                          EVLIS(() ((X . A) (X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                          EVLIS(() ((X . A) (X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → ()
+                                        EVLIS((X) ((X . A) (X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → (A)
+                                        APPLY(ATOM (A) ((X . A) (X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                        APPLY(ATOM (A) ((X . A) (X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → T
+                                      EVAL((ATOM X) ((X . A) (X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → T
+                                      EVAL(X ((X . A) (X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                        ASSOC(X ((X . A) (X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C)))
+                                        ASSOC(X ((X . A) (X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+                                      EVAL(X ((X . A) (X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+                                    EVCON((((ATOM X) X) (T (FF (CAR X)))) ((X . A) (X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+                                  EVAL((COND ((ATOM X) X) (T (FF (CAR X)))) ((X . A) (X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+                                APPLY((LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (A) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+                              APPLY(FF (A) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+                            EVAL((FF (CAR X)) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+                          EVCON(((T (FF (CAR X)))) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+                        EVCON((((ATOM X) X) (T (FF (CAR X)))) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+                      EVAL((COND ((ATOM X) X) (T (FF (CAR X)))) ((X A) (X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+                    APPLY((LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) ((A)) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+                  APPLY(FF ((A)) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+                EVAL((FF (CAR X)) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+              EVCON(((T (FF (CAR X)))) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+            EVCON((((ATOM X) X) (T (FF (CAR X)))) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+          EVAL((COND ((ATOM X) X) (T (FF (CAR X)))) ((X (A) B C) (FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+        APPLY((LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (((A) B C)) ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+      APPLY(FF (((A) B C)) ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+    EVAL((FF X) ((FF LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (X (A) B C))) → A
+  APPLY((LAMBDA (FF X) (FF X)) ((LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) ((A) B C)) NIL) → A
+EVAL(((LAMBDA (FF X) (FF X)) (LAMBDA (X) (COND ((ATOM X) X) (T (FF (CAR X))))) (QUOTE ((A) B C))) NIL) → A
+A

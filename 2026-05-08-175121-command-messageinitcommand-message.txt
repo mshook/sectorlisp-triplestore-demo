@@ -1,0 +1,533 @@
+╭─── Claude Code v2.1.123 ─────────────────────────────────────────────────────╮
+│                                             │ Tips for getting started       │
+│            Welcome back Michael!            │ ✔ Run /init to create a CLAUD… │
+│                                             │ ────────────────────────────── │
+│                   ▐▛███▜▌                   │ What's new                     │
+│                  ▝▜█████▛▘                  │ Added `worktree.baseRef` sett… │
+│                    ▘▘ ▝▝                    │ Added `sandbox.bwrapPath` and… │
+│                                             │ Added `parentSettingsBehavior… │
+│   Sonnet 4.6 · Claude Pro · Michael Shook   │ /release-notes for more        │
+│   ~/projects/sectorlisp-triplestore-demo    │                                │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+❯ /init                                                                         
+
+● I'll explore the codebase to understand its structure before creating the
+  CLAUDE.md.
+
+  Searched for 1 pattern, read 8 files (ctrl+o to expand)
+
+● Now I have a thorough understanding of the project. Let me write the
+  CLAUDE.md.
+
+● Write(CLAUDE.md)
+  ⎿  Wrote 61 lines to CLAUDE.md
+      2 # CLAUDE.md
+      3 This file provides guidance to Claude Code (claude.ai/code) when 
+      4 working with code in this repository.
+      5 ## What this project is
+      6 
+         and pattern-matching query engine in two Lisp dialects, loaded w
+        ith the Microshaft personnel database from SICP §4.4.1. There is 
+        elf-contained Lisp source or standalone HTML.er — all files are s
+      8 
+      9 ## Running the Common Lisp version
+     … +82 lines (ctrl+o to expand)
+
+● CLAUDE.md is created. It covers:
+
+  - How to run both the Common Lisp and SectorLISP versions, including the
+  required load order for the multi-file SectorLISP variant
+  - Architecture table comparing the two implementations on the key design
+  differences (variable syntax, DB passing, failure sentinel, test combinator)
+  - Query engine internals — each function's role in the pipeline, which spans
+  multiple files and isn't obvious without reading them all
+  - Triple format and the special case of list subjects
+  - Browser playground and its self-contained nature
+
+✻ Brewed for 1m 2s
+
+※ recap: Created CLAUDE.md documenting the project's dual-implementation SPO triple store. No further work is pending. (disable recaps in /config)
+
+❯ Add to the file @spo-functions.lisp two functions. One function converts the  
+  triples data base to a data base of ENTITYs following this example: Triples:  
+  (TRIPLE S1 P1 O1)                                                             
+  (TRIPLE S1 P2 O2)                                                             
+  to                                                                            
+                                                                                
+  Entity                                                                        
+  (ENTITY S1 (P1 O1)                                                            
+             (P2 O2)) and the second function will convert a database of        
+  entities back to a database of TRIPLEs                                        
+  ⎿  Read spo-functions.lisp (unchanged)
+
+● Let me read the current end of the file to append cleanly.
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(spo-functions.lisp)
+  ⎿  Added 57 lines
+      137  (DEFINE COMMENT . (QUOTE WITH-ANY-DATABASE-NOT-JUST-MICROSHAFT
+           ))
+      138  (DEFINE ANSWER . (LAMBDA (EXPR TMPL DB)
+      139    (MAP-SUBS (QUERY EXPR NIL DB) TMPL)))
+      140 +                                                              
+      141 +(DEFINE COMMENT . (QUOTE ===PART-5-ENTITY-CONVERSION===))     
+      142 +                                                              
+      143 +(DEFINE COMMENT . (QUOTE MEMBER-EQUAL-TEST-IF-X-IS-IN-LST-USIN
+          +G-STRUCTURAL-EQUAL))                                          
+      144 +(DEFINE MEMBER-EQUAL . (LAMBDA (X LST)                        
+      145 +  (COND ((ATOM LST) NIL)                                      
+      146 +        ((EQUAL X (CAR LST)) T)                               
+      147 +        (T (MEMBER-EQUAL X (CDR LST))))))                     
+      148 +                                                              
+      149 +(DEFINE COMMENT . (QUOTE UNIQUE-SUBJECTS-COLLECT-DISTINCT-SUBJ
+          +ECTS-FROM-TRIPLE-LIST))                                       
+      150 +(DEFINE COMMENT . (QUOTE RECURSES-TO-END-THEN-PREPENDS-SUBJECT
+          +-ONLY-IF-NOT-YET-SEEN))                                       
+      151 +(DEFINE UNIQUE-SUBJECTS . (LAMBDA (DB)                        
+      152 +  (COND ((ATOM DB) NIL)                                       
+      153 +        (T ((LAMBDA (S REST)                                  
+      154 +              (COND ((MEMBER-EQUAL S REST) REST)              
+      155 +                    (T (CONS S REST))))                       
+      156 +             (CAR (CDR (CAR DB)))                             
+      157 +             (UNIQUE-SUBJECTS (CDR DB)))))))                  
+      158 +                                                              
+      159 +(DEFINE COMMENT . (QUOTE PO-PAIRS-FOR-COLLECT-ALL-PRED-OBJ-PAI
+          +RS-FOR-ONE-SUBJECT))                                          
+      160 +(DEFINE COMMENT . (QUOTE RETURNS-A-LIST-OF-TWO-ELEMENT-LISTS-L
+          +IKE-P1-O1-P2-O2))                                             
+      161 +(DEFINE PO-PAIRS-FOR . (LAMBDA (SUBJ DB)                      
+      162 +  (COND ((ATOM DB) NIL)                                       
+      163 +        ((EQUAL SUBJ (CAR (CDR (CAR DB))))                    
+      164 +         (CONS (CONS (CAR (CDR (CDR (CAR DB))))               
+      165 +                     (CONS (CAR (CDR (CDR (CDR (CAR DB))))) NI
+          +L))                                                           
+      166 +               (PO-PAIRS-FOR SUBJ (CDR DB))))                 
+      167 +        (T (PO-PAIRS-FOR SUBJ (CDR DB))))))                   
+      168 +                                                              
+      169 +(DEFINE COMMENT . (QUOTE BUILD-ENTITY-LIST-MAP-EACH-SUBJECT-TO
+          +-AN-ENTITY-RECORD))                                           
+      170 +(DEFINE BUILD-ENTITY-LIST . (LAMBDA (SUBJS DB)                
+      171 +  (COND ((ATOM SUBJS) NIL)                                    
+      172 +        (T (CONS (CONS (QUOTE ENTITY)                         
+      173 +                       (CONS (CAR SUBJS) (PO-PAIRS-FOR (CAR SU
+          +BJS) DB)))                                                    
+      174 +                 (BUILD-ENTITY-LIST (CDR SUBJS) DB))))))      
+      175 +                                                              
+      176 +(DEFINE COMMENT . (QUOTE TRIPLES-TO-ENTITIES-GROUP-FLAT-TRIPLE
+          +-LIST-BY-SUBJECT))                                            
+      177 +(DEFINE COMMENT . (QUOTE IN--TRIPLE-S-P1-O1--TRIPLE-S-P2-O2)) 
+      178 +(DEFINE COMMENT . (QUOTE OUT--ENTITY-S--P1-O1---P2-O2))       
+      179 +(DEFINE TRIPLES-TO-ENTITIES . (LAMBDA (DB)                    
+      180 +  (BUILD-ENTITY-LIST (UNIQUE-SUBJECTS DB) DB)))               
+      181 +                                                              
+      182 +(DEFINE COMMENT . (QUOTE EXPAND-PO-EXPAND-ONE-SUBJECT-AND-PO-P
+          +AIR-LIST-INTO-TRIPLES))                                       
+      183 +(DEFINE EXPAND-PO . (LAMBDA (SUBJ PO-PAIRS)                   
+      184 +  (COND ((ATOM PO-PAIRS) NIL)                                 
+      185 +        (T (CONS (CONS (QUOTE TRIPLE)                         
+      186 +                       (CONS SUBJ (CAR PO-PAIRS)))            
+      187 +                 (EXPAND-PO SUBJ (CDR PO-PAIRS)))))))         
+      188 +                                                              
+      189 +(DEFINE COMMENT . (QUOTE ENTITIES-TO-TRIPLES-FLATTEN-ENTITY-LI
+          +ST-BACK-TO-TRIPLES))                                          
+      190 +(DEFINE COMMENT . (QUOTE IN--ENTITY-S--P1-O1---P2-O2))        
+      191 +(DEFINE COMMENT . (QUOTE OUT--TRIPLE-S-P1-O1--TRIPLE-S-P2-O2))
+      192 +(DEFINE ENTITIES-TO-TRIPLES . (LAMBDA (ENTITIES)              
+      193 +  (COND ((ATOM ENTITIES) NIL)                                 
+      194 +        (T (APPEND (EXPAND-PO (CAR (CDR (CAR ENTITIES)))      
+      195 +                              (CDR (CDR (CAR ENTITIES))))     
+      196 +                   (ENTITIES-TO-TRIPLES (CDR ENTITIES)))))))  
+
+● Let me verify the final result:
+
+  Read 1 file (ctrl+o to expand)
+
+● Clean. Here's what was added and how it works:
+
+  TRIPLES-TO-ENTITIES — three helpers compose it:
+  1. UNIQUE-SUBJECTS — scans the DB recursively to end, then prepends each
+  subject only if not already seen (using MEMBER-EQUAL). Works correctly with
+  list subjects like (COMPUTER WIZARD) because it uses EQUAL, not EQ.
+  2. PO-PAIRS-FOR SUBJ DB — makes a second pass collecting every (P O) pair
+  where the subject matches, producing a list like ((JOB (COMPUTER WIZARD)) 
+  (SALARY 60000) ...).
+  3. BUILD-ENTITY-LIST — maps over the subject list, calling PO-PAIRS-FOR for
+  each and wrapping the result as (ENTITY S (P1 O1) (P2 O2) ...).
+
+  ENTITIES-TO-TRIPLES — one helper:
+  - EXPAND-PO SUBJ PO-PAIRS — walks the (P O) pair list, building each triple as
+   (CONS (QUOTE TRIPLE) (CONS SUBJ (CAR PO-PAIRS))). The key insight is that
+  (CONS SUBJ (P O)) naturally produces (SUBJ P O), so prepending TRIPLE gives
+  the correct 4-element list.
+  - ENTITIES-TO-TRIPLES iterates entities, expands each with EXPAND-PO, and
+  APPENDs the results.
+
+  One behavioural note: subjects in the output of TRIPLES-TO-ENTITIES appear in
+  reverse order of first appearance (a consequence of the tail-recursive
+  deduplication strategy). The triple content within each entity preserves
+  original DB order.
+
+✻ Brewed for 2m 35s
+
+※ recap: Added two conversion functions to spo-functions.lisp: TRIPLES-TO-ENTITIES groups triples by subject into ENTITY records, and ENTITIES-TO-TRIPLES flattens them back. Ready to test in the SectorLISP playground. (disable recaps in /config)
+
+❯ test it with a small sample in the playground                                 
+
+● Let me first check if I can run the SectorLISP interpreter from the command
+  line, then look at the playground HTML to understand the execution model.
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+● Good — node and clisp are both available. Let me check how the HTML playground
+   drives the JS interpreter, then figure out the cleanest way to run the code
+  headlessly.
+
+  Searched for 2 patterns, read 1 file (ctrl+o to expand)
+
+● I can see the interpreter is pure JS with a thin DOM wrapper. I'll write a
+  headless Node.js test script that extracts the interpreter from the HTML,
+  stubs the DOM, then runs a small round-trip test.
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+● Bash(cat > /tmp/test-entity.js << 'EOF'
+      const fs = require('fs');…)
+  ⎿  Error: Exit code 1
+     undefined:392
+     document.addEventListener('click', function(e) {
+              ^
+
+     TypeError: document.addEventListener is not a function
+         at eval (eval at <anonymous> (/tmp/test-entity.js:15:1), 
+     <anonymous>:392:10)
+         at Object.<anonymous> (/tmp/test-entity.js:15:1)
+         at Module._compile (node:internal/modules/cjs/loader:1364:14)
+         at Module._extensions..js (node:internal/modules/cjs/loader:1422:10)
+     … +6 lines (ctrl+o to expand)
+
+● The script section includes UI event handlers too. Let me find where the pure
+  interpreter ends and the UI code begins, then extract just the interpreter.
+  Searched for 2 patterns, read 1 file (ctrl+o to expand)
+
+● The interpreter ends at line 837 (after Reset()). I'll extract only that
+  pure-interpreter portion.
+
+● Bash(cat > /tmp/test-entity.js << 'EOF'
+      const fs = require('fs');…)
+  ⎿  === Test 1: TRIPLES-TO-ENTITIES ===
+     ((ENTITY FOO (A 1) (B 2)) (ENTITY BAR (A 3)))
+     … +5 lines (ctrl+o to expand)
+
+● All three tests pass:
+
+  - Test 1 — two triples sharing subject FOO are merged into one ENTITY with
+  both PO pairs; the lone BAR triple becomes its own entity.
+  - Test 2 — the inverse: each entity fans back out into individual triples,
+  preserving predicate and object.
+  - Test 3 — full round-trip on the real Microshaft DB (MICROSHAFT-DB):
+  ENTITIES-TO-TRIPLES(TRIPLES-TO-ENTITIES(db)) is EQUAL to the original — T.
+
+✻ Baked for 1m 58s
+
+❯ show me just TRIPLES-TO-ENTITIES(db)                                          
+
+● Bash(cat > /tmp/test-show.js << 'EOF'
+      const fs = require('fs');…)
+  ⎿  (ENTITY BITDIDDLE-BEN (NAME (BITDIDDLE BEN)) (JOB (COMPUTER WIZARD)) (
+     SALARY 60000) (ADDRESS (SLUMERVILLE (RIDGE ROAD) 10)) (SUPERVISOR WARB
+     UCKS-OLIVER))
+     … +21 lines (ctrl+o to expand)
+
+● Each subject is grouped into a single entity with all its predicate-object
+  pairs collected. A few things worth noting:
+
+  - WARBUCKS-OLIVER has no SUPERVISOR pair — correctly absent since there's no
+  such triple in the DB.
+  - The last three entities have list subjects ((COMPUTER WIZARD) etc.) — the
+  grouping works uniformly whether the subject is an atom or a list, because
+  UNIQUE-SUBJECTS and PO-PAIRS-FOR both use EQUAL for comparison.
+  - (COMPUTER WIZARD) has two CAN-DO-JOB pairs in one entity, since multiple
+  triples sharing the same subject are merged regardless of whether the
+  predicate repeats.
+
+✻ Baked for 27s
+
+※ recap: Added TRIPLES-TO-ENTITIES and ENTITIES-TO-TRIPLES to spo-functions.lisp and verified them against the Microshaft DB with a headless Node.js test. No open tasks remain. (disable recaps in /config)
+
+❯ Add these functions to the spo triple store section of the load example       
+  button in @sectorlisp-playground.html and @sectorlisp-repl.html               
+  ⎿  Read sectorlisp-playground.html (10 lines)
+  ⎿  Read sectorlisp-repl.html (1183 lines)
+
+● I need to read the EXAMPLES section of the playground HTML and also confirm
+  the dropdown HTML in both files before editing.
+
+  Read 1 file (ctrl+o to expand)
+
+● Now I have the full picture. Both files need: a new dropdown button in the SPO
+   section, and a new EXAMPLES['entities'] entry. The playground is
+  self-contained (includes T/EQUAL/APPEND + mini sample DB); the REPL version
+  relies on 'microshaft' being loaded first.
+
+● Update(sectorlisp-playground.html)
+  ⎿  Added 4 lines
+      504              Microshaft personnel database
+      505              <span class="dropdown-item-sub">Full query engine 
+           + Microshaft DB + 10 queries</span>
+      506            </button>
+      507 +          <button class="dropdown-item" onclick="loadExample('
+          +entities')">                                                  
+      508 +            Entity views — triples ↔ entities                 
+      509 +            <span class="dropdown-item-sub">Group triples by s
+          +ubject; expand back to triples</span>                         
+      510 +          </button>                                           
+      511          </div>
+      512        </div>
+      513      </div>
+
+● Update(sectorlisp-playground.html)
+  ⎿  Added 79 lines
+      1435    (QUOTE ((? PNAME) REPORTS-TO (? BNAME)))
+      1436    (MICROSHAFT-DB))`;
+      1437  
+      1438 +EXAMPLES['entities'] = `(DEFINE COMMENT . (QUOTE ENTITY-CONVE
+           +RSION-GROUP-TRIPLES-BY-SUBJECT))                             
+      1439 +                                                             
+      1440 +(DEFINE T . T)                                               
+      1441 +                                                             
+      1442 +(DEFINE EQUAL . (LAMBDA (X Y)                                
+      1443 +  (COND ((ATOM X)                                            
+      1444 +         (COND ((ATOM Y) (EQ X Y))                           
+      1445 +               (T NIL)))                                     
+      1446 +        ((ATOM Y) NIL)                                       
+      1447 +        ((EQUAL (CAR X) (CAR Y)) (EQUAL (CDR X) (CDR Y)))    
+      1448 +        (T NIL))))                                           
+      1449 +                                                             
+      1450 +(DEFINE APPEND . (LAMBDA (X Y)                               
+      1451 +  (COND ((ATOM X) Y)                                         
+      1452 +        (T (CONS (CAR X) (APPEND (CDR X) Y))))))             
+      1453 +                                                             
+      1454 +(DEFINE MEMBER-EQUAL . (LAMBDA (X LST)                       
+      1455 +  (COND ((ATOM LST) NIL)                                     
+      1456 +        ((EQUAL X (CAR LST)) T)                              
+      1457 +        (T (MEMBER-EQUAL X (CDR LST))))))                    
+      1458 +                                                             
+      1459 +(DEFINE UNIQUE-SUBJECTS . (LAMBDA (DB)                       
+      1460 +  (COND ((ATOM DB) NIL)                                      
+      1461 +        (T ((LAMBDA (S REST)                                 
+      1462 +              (COND ((MEMBER-EQUAL S REST) REST)             
+      1463 +                    (T (CONS S REST))))                      
+      1464 +             (CAR (CDR (CAR DB)))                            
+      1465 +             (UNIQUE-SUBJECTS (CDR DB)))))))                 
+      1466 +                                                             
+      1467 +(DEFINE PO-PAIRS-FOR . (LAMBDA (SUBJ DB)                     
+      1468 +  (COND ((ATOM DB) NIL)                                      
+      1469 +        ((EQUAL SUBJ (CAR (CDR (CAR DB))))                   
+      1470 +         (CONS (CONS (CAR (CDR (CDR (CAR DB))))              
+      1471 +                     (CONS (CAR (CDR (CDR (CDR (CAR DB))))) N
+           +IL))                                                         
+      1472 +               (PO-PAIRS-FOR SUBJ (CDR DB))))                
+      1473 +        (T (PO-PAIRS-FOR SUBJ (CDR DB))))))                  
+      1474 +                                                             
+      1475 +(DEFINE BUILD-ENTITY-LIST . (LAMBDA (SUBJS DB)               
+      1476 +  (COND ((ATOM SUBJS) NIL)                                   
+      1477 +        (T (CONS (CONS (QUOTE ENTITY)                        
+      1478 +                       (CONS (CAR SUBJS) (PO-PAIRS-FOR (CAR S
+           +UBJS) DB)))                                                  
+      1479 +                 (BUILD-ENTITY-LIST (CDR SUBJS) DB))))))     
+      1480 +                                                             
+      1481 +(DEFINE TRIPLES-TO-ENTITIES . (LAMBDA (DB)                   
+      1482 +  (BUILD-ENTITY-LIST (UNIQUE-SUBJECTS DB) DB)))              
+      1483 +                                                             
+      1484 +(DEFINE EXPAND-PO . (LAMBDA (SUBJ PO-PAIRS)                  
+      1485 +  (COND ((ATOM PO-PAIRS) NIL)                                
+      1486 +        (T (CONS (CONS (QUOTE TRIPLE)                        
+      1487 +                       (CONS SUBJ (CAR PO-PAIRS)))           
+      1488 +                 (EXPAND-PO SUBJ (CDR PO-PAIRS)))))))        
+      1489 +                                                             
+      1490 +(DEFINE ENTITIES-TO-TRIPLES . (LAMBDA (ENTITIES)             
+      1491 +  (COND ((ATOM ENTITIES) NIL)                                
+      1492 +        (T (APPEND (EXPAND-PO (CAR (CDR (CAR ENTITIES)))     
+      1493 +                              (CDR (CDR (CAR ENTITIES))))    
+      1494 +                   (ENTITIES-TO-TRIPLES (CDR ENTITIES))))))) 
+      1495 +                                                             
+      1496 +(DEFINE COMMENT . (QUOTE SAMPLE-DATABASE))                   
+      1497 +                                                             
+      1498 +(DEFINE SAMPLE-DB . (LAMBDA ()                               
+      1499 +  (QUOTE (                                                   
+      1500 +    (TRIPLE ALICE JOB        ENGINEER)                       
+      1501 +    (TRIPLE ALICE DEPT       COMPUTING)                      
+      1502 +    (TRIPLE BOB   JOB        MANAGER)                        
+      1503 +    (TRIPLE BOB   DEPT       COMPUTING)                      
+      1504 +    (TRIPLE BOB   REPORTS-TO CAROL)                          
+      1505 +    (TRIPLE CAROL JOB        DIRECTOR)                       
+      1506 +  ))))                                                       
+      1507 +                                                             
+      1508 +(DEFINE COMMENT . (QUOTE CONVERT-TRIPLES-TO-ENTITIES))       
+      1509 +(TRIPLES-TO-ENTITIES (SAMPLE-DB))                            
+      1510 +                                                             
+      1511 +(DEFINE COMMENT . (QUOTE EXPAND-ENTITIES-BACK-TO-TRIPLES))   
+      1512 +(ENTITIES-TO-TRIPLES (TRIPLES-TO-ENTITIES (SAMPLE-DB)))      
+      1513 +                                                             
+      1514 +(DEFINE COMMENT . (QUOTE ROUND-TRIP-EQUAL-CHECK))            
+      1515 +(EQUAL (SAMPLE-DB) (ENTITIES-TO-TRIPLES (TRIPLES-TO-ENTITIES 
+           +(SAMPLE-DB))))`;                                             
+      1516 +                                                             
+      1517  // ── Boot ──────────────────────────────────────────────────
+            ───
+      1518  Reset();
+      1519  loadFromHash();
+
+● Now the REPL file — the dropdown uses loadEx and the SPO section has separate
+  engine/queries entries:
+
+● Update(sectorlisp-repl.html)
+  ⎿  Added 2 lines
+      499            <span class="dropdown-item-sub">Defines all function
+           s and the Microshaft database</span></button>
+      500          <button class="dropdown-item" onclick="loadEx('queries
+           ')">Microshaft — run queries
+      501            <span class="dropdown-item-sub">Ten example queries 
+           (load engine + DB first)</span></button>
+      502 +        <button class="dropdown-item" onclick="loadEx('entitie
+          +s')">Entity views — triples ↔ entities                        
+      503 +          <span class="dropdown-item-sub">Group by subject; ex
+          +pand back (load microshaft first)</span></button>             
+      504        </div>
+      505      </div>
+      506    </div>
+
+● Update(sectorlisp-repl.html)
+  ⎿  Added 52 lines
+      1175  
+      1176  (ANSWER (QUOTE (TRIPLE (? P) ADDRESS (SLUMERVILLE . (? REST))
+            )) (QUOTE ((? P) LIVES-IN SLUMERVILLE)) (MICROSHAFT-DB))`;
+      1177  
+      1178 +EXAMPLES['entities'] = `(DEFINE COMMENT . (QUOTE ENTITY-CONVE
+           +RSION-LOAD-MICROSHAFT-FIRST))                                
+      1179 +                                                             
+      1180 +(DEFINE MEMBER-EQUAL . (LAMBDA (X LST)                       
+      1181 +  (COND ((ATOM LST) NIL)                                     
+      1182 +        ((EQUAL X (CAR LST)) T)                              
+      1183 +        (T (MEMBER-EQUAL X (CDR LST))))))                    
+      1184 +                                                             
+      1185 +(DEFINE UNIQUE-SUBJECTS . (LAMBDA (DB)                       
+      1186 +  (COND ((ATOM DB) NIL)                                      
+      1187 +        (T ((LAMBDA (S REST)                                 
+      1188 +              (COND ((MEMBER-EQUAL S REST) REST)             
+      1189 +                    (T (CONS S REST))))                      
+      1190 +             (CAR (CDR (CAR DB)))                            
+      1191 +             (UNIQUE-SUBJECTS (CDR DB)))))))                 
+      1192 +                                                             
+      1193 +(DEFINE PO-PAIRS-FOR . (LAMBDA (SUBJ DB)                     
+      1194 +  (COND ((ATOM DB) NIL)                                      
+      1195 +        ((EQUAL SUBJ (CAR (CDR (CAR DB))))                   
+      1196 +         (CONS (CONS (CAR (CDR (CDR (CAR DB))))              
+      1197 +                     (CONS (CAR (CDR (CDR (CDR (CAR DB))))) N
+           +IL))                                                         
+      1198 +               (PO-PAIRS-FOR SUBJ (CDR DB))))                
+      1199 +        (T (PO-PAIRS-FOR SUBJ (CDR DB))))))                  
+      1200 +                                                             
+      1201 +(DEFINE BUILD-ENTITY-LIST . (LAMBDA (SUBJS DB)               
+      1202 +  (COND ((ATOM SUBJS) NIL)                                   
+      1203 +        (T (CONS (CONS (QUOTE ENTITY)                        
+      1204 +                       (CONS (CAR SUBJS) (PO-PAIRS-FOR (CAR S
+           +UBJS) DB)))                                                  
+      1205 +                 (BUILD-ENTITY-LIST (CDR SUBJS) DB))))))     
+      1206 +                                                             
+      1207 +(DEFINE TRIPLES-TO-ENTITIES . (LAMBDA (DB)                   
+      1208 +  (BUILD-ENTITY-LIST (UNIQUE-SUBJECTS DB) DB)))              
+      1209 +                                                             
+      1210 +(DEFINE EXPAND-PO . (LAMBDA (SUBJ PO-PAIRS)                  
+      1211 +  (COND ((ATOM PO-PAIRS) NIL)                                
+      1212 +        (T (CONS (CONS (QUOTE TRIPLE)                        
+      1213 +                       (CONS SUBJ (CAR PO-PAIRS)))           
+      1214 +                 (EXPAND-PO SUBJ (CDR PO-PAIRS)))))))        
+      1215 +                                                             
+      1216 +(DEFINE ENTITIES-TO-TRIPLES . (LAMBDA (ENTITIES)             
+      1217 +  (COND ((ATOM ENTITIES) NIL)                                
+      1218 +        (T (APPEND (EXPAND-PO (CAR (CDR (CAR ENTITIES)))     
+      1219 +                              (CDR (CDR (CAR ENTITIES))))    
+      1220 +                   (ENTITIES-TO-TRIPLES (CDR ENTITIES))))))) 
+      1221 +                                                             
+      1222 +(DEFINE COMMENT . (QUOTE GROUP-ALL-MICROSHAFT-TRIPLES-BY-SUBJ
+           +ECT))                                                        
+      1223 +(TRIPLES-TO-ENTITIES (MICROSHAFT-DB))                        
+      1224 +                                                             
+      1225 +(DEFINE COMMENT . (QUOTE ROUND-TRIP-EQUAL-CHECK))            
+      1226 +(EQUAL                                                       
+      1227 +  (MICROSHAFT-DB)                                            
+      1228 +  (ENTITIES-TO-TRIPLES (TRIPLES-TO-ENTITIES (MICROSHAFT-DB)))
+           +)`;                                                          
+      1229 +                                                             
+      1230  // ── Boot ─────────────────────────────────────────────────
+      1231  Reset();
+      1232  loadFromHash();
+
+● Now let me verify the changes look correct in both files:
+
+  Searched for 2 patterns (ctrl+o to expand)
+
+● Both files are updated. Here's a summary of what was added:
+
+  Both files — dropdown: A new "Entity views — triples ↔ entities" button added
+  to the SPO triple store section.
+
+  sectorlisp-playground.html (EXAMPLES['entities']): Self-contained — defines T,
+   EQUAL, APPEND, all seven entity helpers, then a SAMPLE-DB lambda
+  (Alice/Bob/Carol, 6 triples), and three expressions: TRIPLES-TO-ENTITIES,
+  ENTITIES-TO-TRIPLES of the result, and the round-trip EQUAL check.
+
+  sectorlisp-repl.html (EXAMPLES['entities']): Designed to be loaded after
+  "Microshaft — load engine + DB", so it only defines the seven entity functions
+   and then calls (TRIPLES-TO-ENTITIES (MICROSHAFT-DB)) and the round-trip check
+   against the live DB.
+
+✻ Brewed for 2m 41s
+
+※ recap: Added entity conversion functions to spo-functions.lisp and wired them into the Load Example menus of both HTML playgrounds. Both are tested and working — no outstanding actions.
+
+❯ commit this                                                                   
+
+● Bash(git -C /home/mshook/projects/sectorlisp-triplestore-demo status)  ⎿  On branch main
+     Your branch is up to date with 'origin/main'.
+     … +13 lines (ctrl+o to expand)
+
+● Bash(git -C /home/mshook/projects/sectorlisp-triplestore-demo diff)
+  ⎿  diff --git a/sectorlisp-playground.html b/sectorlisp-playground.html
+     index ac50f4f..20f3eab 100644
+     --- a/sectorlisp-playground.html
+     … +134 lines (ctrl+o to expand)
+
+● Bash(git -C /home/mshook/projects/sectorlisp-triplestore-demo log --oneline
+      -5)
+  ⎿  155065c Add files via upload
+     61c9f43 Add files via upload
+     533e708 Add files via upload
+     … +2 lines (ctrl+o to expand)
+
+● Bash(git -C /home/mshook/projects/sectorlisp-triplestore-demo add
+      spo-functions.lisp sectorlisp-playground.html sectorlisp-repl.html
+      CLAUDE.md && git -C /home/mshook…)
+  ⎿  [main d26f713] Add TRIPLES-TO-ENTITIES and ENTITIES-TO-TRIPLES to SPO
+     engine
+      4 files changed, 255 insertions(+)
+      create mode 100644 CLAUDE.md
+
+● Committed as d26f713. Four files in the commit: spo-functions.lisp, both HTML
+  files, and CLAUDE.md.
+
+✻ Baked for 17s
+
+※ recap: Added TRIPLES-TO-ENTITIES and ENTITIES-TO-TRIPLES functions to the SectorLISP triple store engine, exposed them as load examples in both HTML UIs, and committed everything. No pending work.
+
+❯ /insights                                                                     
+
+● Your shareable insights report is ready:
+  file:///home/mshook/.claude/usage-data/report.html
+
+  Want to dig into any section or try one of the suggestions?
+
+✻ Crunched for 4s
